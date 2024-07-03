@@ -1,11 +1,13 @@
 use crate::tui;
 
+use canvas::{Canvas, Circle, Rectangle};
 use color_eyre::{
-    eyre::WrapErr, Result
+    eyre::WrapErr, owo_colors::OwoColorize, Result
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 
+use num::ToPrimitive;
 use ratatui::{
     prelude::*, 
     style::Color, 
@@ -17,7 +19,7 @@ use std::path::Path;
 use crate::read_write::*;
 
 use crate::towers::*;
-use crate::balloons::*;
+use crate::balloons::Ballon;
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -27,6 +29,9 @@ pub struct App {
     on_pause: bool,
     dead: bool,
     won: bool,
+    path: BallonPath,
+    ballons: Vec<Ballon>,
+    towers: Vec<Tower>
 }
 
 impl Widget for &App {
@@ -35,12 +40,8 @@ impl Widget for &App {
             Self: Sized {
 
                 let instructions = Title::from(Line::from(vec![
-                    " move:".bold(),
-                    " <arrows> ".bold(),
                     " exit:".bold(),
                     " <q> ".bold(),
-                    " continue (after 2048):".bold(),
-                    " <c> ".bold(),
                     " restart:".bold(),
                     " <Enter> ".bold()
                 ]));
@@ -55,11 +56,6 @@ impl Widget for &App {
                         .position(Position::Bottom))
                     .bg(Color::Black);
 
-                let chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Percentage(25), Constraint::Percentage(25), Constraint::Percentage(25), Constraint::Percentage(25)].as_ref())
-                    .split(area.inner(Margin::new(32, 2)));
-
                 Paragraph::new(Line::from(self.score.to_string()))
                     .alignment(Alignment::Left)
                     .block(block.clone())
@@ -70,12 +66,61 @@ impl Widget for &App {
                     .block(block.clone())
                     .render(area, buf);
                 
-
-                
-                Paragraph::new(Line::from(" dead ".bold().red()))
+                if !self.dead {
+                    Canvas::default()
+                        .block(block.clone())
+                        .x_bounds([-90.0, 90.0])
+                        .y_bounds([-90.0, 90.0])
+                        .background_color(Color::Black)
+                        .paint(|ctx| {
+                            for rect in self.path.elements.iter() { // draw the path of the ballons
+                                ctx.draw(&Rectangle {
+                                    x: rect.x,
+                                    y: rect.y,
+                                    height: rect.height,
+                                    width: rect.width,
+                                    color: Color::White
+                                })
+                            }
+                            ctx.layer();
+                            for ballon in self.ballons.iter() { // draw the ballons
+                                ctx.draw(&Circle {
+                                    x: ballon.x,
+                                    y: ballon.y,
+                                    radius: ballon.radius,
+                                    color: ballon.color
+                                })
+                            }
+                            ctx.layer();
+                            for tower in self.towers.iter() { // draw the towers
+                                ctx.draw(&Rectangle {
+                                    x: tower.x,
+                                    y: tower.y,
+                                    width: tower.width,
+                                    height: tower.height,
+                                    color: tower.color
+                                })
+                            }
+                            ctx.layer();
+                            for tower in self.towers.iter() { // draw all projectiles
+                                for projectile in tower.projectiles.iter() {
+                                    ctx.draw(&Circle {
+                                        x: projectile.x,
+                                        y: projectile.y,
+                                        radius: projectile.radius,
+                                        color: projectile.color
+                                    })
+                                }
+                            }
+                        })
+                        .render(area, buf);
+                }
+                else {
+                    Paragraph::new(Line::from(" dead ".bold().red()))
                         .centered()
                         .block(block.clone())
                         .render(area, buf);
+                }
 
                 if self.won {
                     Paragraph::new(Line::from(vec![Span::from(" Congratulations you won |".bold()), Span::from(" restart: <Enter>, continue: <c>".bold())]))
@@ -125,14 +170,18 @@ impl App {
     }
 
     pub fn new() -> Result<Self> {
-        let app = App {
+        let mut app = App {
             score: 0,
             highscore: 0,
             exit: false,
             dead: false,
             on_pause: false,
             won: false,
+            path: BallonPath::default(),
+            ballons: vec![],
+            towers: vec![]
         };
+        app.path.generate_path();
         Ok(app)
     }
 
@@ -182,5 +231,38 @@ impl App {
             self.dead = true;
         }
         Ok(())
+    }
+}
+
+
+#[derive(Debug, Default)]
+struct BallonPath {
+    elements: Vec<RectangleInPath>
+}
+
+impl BallonPath {
+    fn generate_path(&mut self) {
+        for i in 0..180 {
+            self.elements.push(RectangleInPath::new((i * 10).to_f64().unwrap() - 90.0, 0.0));
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+struct RectangleInPath {
+    x: f64,
+    y: f64,
+    height: f64,
+    width: f64
+}
+
+impl RectangleInPath {
+    fn new(x: f64, y: f64) -> Self {
+        RectangleInPath {
+            x: x,
+            y: y,
+            height: 5.0,
+            width: 10.0
+        }
     }
 }

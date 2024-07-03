@@ -1,9 +1,23 @@
-use ratatui::prelude::Color;
+use ratatui::{
+    prelude::Color,
+    widgets::canvas::{Rectangle, Shape}
+};
 
-struct balloon {
-    x: f64,
-    y: f64,
-    height: f64,
-    width: f64,
-    color: Color,
+#[derive(Debug, Default)]
+pub struct Ballon {
+    pub x: f64,
+    pub y: f64,
+    pub radius: f64,
+    pub color: Color,
+}
+
+#[derive(Debug, Default)]
+pub struct BallonFactory {
+
+}
+
+impl BallonFactory {
+    fn generate_wave() -> Vec<Ballon> {
+        vec![]
+    }
 }

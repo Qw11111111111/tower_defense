@@ -1,15 +1,25 @@
 use ratatui::prelude::Color;
 
 
-struct tower {
-    x: f64,
-    y: f64,
-    height: f64,
-    width: f64,
-    color: Color,
+#[derive(Debug, Default)]
+pub struct Tower {
+    pub x: f64,
+    pub y: f64,
+    pub height: f64,
+    pub width: f64,
+    pub color: Color,
+    pub projectiles: Vec<Projectile>
 }
 
 //find out how to do inheritance in rust (traits, ...)
-impl tower {
+impl Tower {
     
+}
+
+#[derive(Debug, Default)]
+pub struct Projectile {
+    pub x: f64,
+    pub y: f64,
+    pub radius: f64,
+    pub color: Color
 }
