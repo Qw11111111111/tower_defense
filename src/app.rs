@@ -271,16 +271,10 @@ pub struct BallonPath {
 
 impl BallonPath {
     fn generate_path(&mut self) {
-        for i in 0..10 {
-            self.elements.push(RectangleInPath::new(((i - 9) * 10).to_f64().unwrap(), 0.0));
-        }
 
-        self.elements.push(RectangleInPath::new(0.0, 10.0));
-        self.elements.push(RectangleInPath::new(0.0, 20.0));
-        for i in 0..9 {
-            self.elements.push(RectangleInPath::new((i * 10).to_f64().unwrap(), 30.0));
-        }
-        
+        self.elements.push(RectangleInPath::horizontal(-90.0, 0.0, 0.0));
+        self.elements.push(RectangleInPath::vertical(0.0, 30.0, 0.0));
+        self.elements.push(RectangleInPath::horizontal(0.0, 90.0, 30.0));
     }
 }
 
@@ -289,7 +283,8 @@ pub struct RectangleInPath {
     pub x: f64,
     pub y: f64,
     pub height: f64,
-    pub width: f64
+    pub width: f64,
+    pub is_horizontal: bool,
 }
 
 impl RectangleInPath {
@@ -298,7 +293,28 @@ impl RectangleInPath {
             x: x,
             y: y,
             height: 10.0,
-            width: 10.0
+            width: 10.0,
+            is_horizontal: true,
+        }
+    }
+
+    fn horizontal(x0: f64, x1: f64, y: f64) -> Self {
+        RectangleInPath {
+            x: x0,
+            y: y,
+            height: 10.0,
+            width: x1 - x0,
+            is_horizontal: true,
+        }
+    }
+
+    fn vertical(y0: f64, y1: f64, x: f64) -> Self {
+        RectangleInPath {
+            x: x,
+            y: y0,
+            width: 5.0,
+            height: y1 - y0,
+            is_horizontal: false
         }
     }
 }
