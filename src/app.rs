@@ -272,8 +272,10 @@ pub struct BallonPath {
 impl BallonPath {
     fn generate_path(&mut self) {
         self.elements.push(RectangleInPath::horizontal(-90.0, 0.0, 0.0));
-        self.elements.push(RectangleInPath::vertical(0.0, 30.0, 0.0));
-        self.elements.push(RectangleInPath::horizontal(0.0, 90.0, 30.0));
+        self.elements.push(RectangleInPath::vertical(0.0, 40.0, 0.0));
+        self.elements.push(RectangleInPath::horizontal(-45.0, 0.0, 30.0));
+        self.elements.push(RectangleInPath::vertical(-10.0, 40.0, -45.0));
+        self.elements.push(RectangleInPath::horizontal(-45.0, 90.0, -10.0));
     }
 }
 
@@ -287,15 +289,6 @@ pub struct RectangleInPath {
 }
 
 impl RectangleInPath {
-    fn new(x: f64, y: f64) -> Self {
-        RectangleInPath {
-            x: x,
-            y: y,
-            height: 10.0,
-            width: 10.0,
-            is_horizontal: true,
-        }
-    }
 
     fn horizontal(x0: f64, x1: f64, y: f64) -> Self {
         RectangleInPath {

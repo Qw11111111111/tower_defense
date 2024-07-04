@@ -18,6 +18,10 @@ pub struct Ballon {
 
 impl Ballon {
     pub fn move_ballon(&mut self, path: &BallonPath) -> bool {
+        /*
+        In order for this to work the ballon must be able to move into the next segment by continuing into the previous direction. 
+        This means that vertical and horizontal segments must overlap accordingly.
+         */
         if path.elements[self.current_segment].is_horizontal {
             let next = self.x + self.last_move[0];
             if next > path.elements[self.current_segment].x + path.elements[self.current_segment].width || next < path.elements[self.current_segment].x {
