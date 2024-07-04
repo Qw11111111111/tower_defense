@@ -1,4 +1,4 @@
-use crate::tui;
+use crate::{ballons::BallonFactory, tui};
 
 use canvas::{Canvas, Circle, Rectangle};
 use color_eyre::{
@@ -19,7 +19,7 @@ use std::path::Path;
 use crate::read_write::*;
 
 use crate::towers::*;
-use crate::balloons::Ballon;
+use crate::ballons::Ballon;
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -31,7 +31,9 @@ pub struct App {
     won: bool,
     path: BallonPath,
     ballons: Vec<Ballon>,
-    towers: Vec<Tower>
+    towers: Vec<Tower>,
+    ballon_factory: BallonFactory,
+    round: usize
 }
 
 impl Widget for &App {
@@ -143,7 +145,9 @@ impl App {
             if self.on_pause || self.dead {
                 continue;
             }
+            self.move_wave();
             self.highscore();
+            self.handle_wave();
         }
         Ok(())
     }
@@ -179,7 +183,9 @@ impl App {
             won: false,
             path: BallonPath::default(),
             ballons: vec![],
-            towers: vec![]
+            towers: vec![],
+            ballon_factory: BallonFactory::default(),
+            round: 1
         };
         app.path.generate_path();
         Ok(app)
@@ -190,6 +196,7 @@ impl App {
             KeyCode::Char('q') => self.exit(),
             KeyCode::Esc => self.pause()?,
             KeyCode::Enter => self.restart()?,
+            KeyCode::Right => {},
             _ => {}
         }
         Ok(())
@@ -232,28 +239,57 @@ impl App {
         }
         Ok(())
     }
+
+    fn next_wave(&mut self) {
+        self.ballons = self.ballon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
+    }
+
+    fn handle_wave(&mut self) {
+        if self.ballons.len() == 0 {
+            self.next_wave();
+        }
+    }
+
+    fn move_wave(&mut self) {
+        let mut k = 0;
+        for i in 0..self.ballons.len() {
+            let boolena = self.ballons[i - k].move_ballon(&self.path);
+            if !boolena {
+                self.ballons.remove(i - k);
+                k += 1;
+            }
+        }
+    }
+
 }
 
 
 #[derive(Debug, Default)]
-struct BallonPath {
-    elements: Vec<RectangleInPath>
+pub struct BallonPath {
+    pub elements: Vec<RectangleInPath>
 }
 
 impl BallonPath {
     fn generate_path(&mut self) {
-        for i in 0..180 {
-            self.elements.push(RectangleInPath::new((i * 10).to_f64().unwrap() - 90.0, 0.0));
+        for i in 0..10 {
+            self.elements.push(RectangleInPath::new(((i - 9) * 10).to_f64().unwrap(), 0.0));
         }
+
+        self.elements.push(RectangleInPath::new(0.0, 10.0));
+        self.elements.push(RectangleInPath::new(0.0, 20.0));
+        for i in 0..9 {
+            self.elements.push(RectangleInPath::new((i * 10).to_f64().unwrap(), 30.0));
+        }
+        
     }
 }
 
 #[derive(Debug, Default)]
-struct RectangleInPath {
-    x: f64,
-    y: f64,
-    height: f64,
-    width: f64
+pub struct RectangleInPath {
+    pub x: f64,
+    pub y: f64,
+    pub height: f64,
+    pub width: f64
 }
 
 impl RectangleInPath {
@@ -261,7 +297,7 @@ impl RectangleInPath {
         RectangleInPath {
             x: x,
             y: y,
-            height: 5.0,
+            height: 10.0,
             width: 10.0
         }
     }
