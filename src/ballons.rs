@@ -18,11 +18,9 @@ pub struct Ballon {
 
 impl Ballon {
     pub fn move_ballon(&mut self, path: &BallonPath) -> bool {
-        println!("wiww");
         if path.elements[self.current_segment].is_horizontal {
             let next = self.x + self.last_move[0];
             if next > path.elements[self.current_segment].x + path.elements[self.current_segment].width || next < path.elements[self.current_segment].x {
-                println!("huh");
                 self.current_segment += 1;
                 if self.current_segment == path.elements.len() {
                     return false;
@@ -35,7 +33,6 @@ impl Ballon {
         else {
             let next = self.y + self.last_move[1];
             if next > path.elements[self.current_segment].y + path.elements[self.current_segment].height || next < path.elements[self.current_segment].y {
-                println!("uhuhuh");
                 self.current_segment += 1;
                 if self.current_segment == path.elements.len() {
                     return false;
@@ -47,9 +44,13 @@ impl Ballon {
         }
         
         if path.elements[self.current_segment].is_horizontal {
-            println!("zes");
             if self.last_move[0] != 0.0 {
                 self.x += self.last_move[0];
+                return true;
+            }
+            if self.current_segment == 0 {
+                self.x += 1.0;
+                self.last_move[0] = 1.0;
                 return true;
             }
             if path.elements[self.current_segment].x >= path.elements[self.current_segment - 1].x {
