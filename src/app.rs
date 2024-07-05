@@ -144,7 +144,7 @@ impl Widget for &App {
 impl App {
 
     pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
-        let time = 50000;
+        let time = 1;
         loop {
             terminal.draw(|frame| self.render_frame(frame))?;
             if event::poll(Duration::from_micros(time))? {
@@ -224,7 +224,9 @@ impl App {
     fn handle_mouse_event(&mut self, mouse_event: MouseEvent) -> Result<()> {
         match mouse_event.kind {
             MouseEventKind::Down(MouseButton::Left) => { // num of rows/cols depends on screensize, but is ankered at top left corner
-                self.new_tower(mouse_event.row, mouse_event.column);
+                if !self.mouse_over_path(mouse_event) {
+                    self.new_tower(mouse_event.row, mouse_event.column);
+                }
             },
             MouseEventKind::Up(MouseButton::Left) => {
 
@@ -321,6 +323,12 @@ impl App {
         actual_row
     }
 
+    fn mouse_over_path(&self, mouse_event: MouseEvent) -> bool {
+        let x = self.col_to_x(mouse_event.column);
+        let y = self.row_to_y(mouse_event.row);
+        self.path.point_on_path(x, y)
+    }
+
 }
 
 
@@ -336,6 +344,12 @@ impl BallonPath {
         self.elements.push(RectangleInPath::horizontal(-45.0, 0.0, 30.0));
         self.elements.push(RectangleInPath::vertical(-10.0, 40.0, -45.0));
         self.elements.push(RectangleInPath::horizontal(-45.0, 90.0, -10.0));
+    }
+
+    fn point_on_path(&self, x: f64, y: f64) -> bool {
+        self.elements.iter().map(|element| {
+            element.point_on_self(x, y)
+        }).any(|x| x)
     }
 }
 
@@ -369,4 +383,26 @@ impl RectangleInPath {
             is_horizontal: false
         }
     }
+
+    fn point_on_self(&self, x: f64, y: f64) -> bool {
+        if self.is_horizontal {
+            let y_check = y >= self.y && y <= self.y + self.height;
+            if self.width < 0.0 {
+                return y_check && (x <= self.x && x >= self.x + self.width);
+            }
+            else {
+                return y_check && (x >= self.x && x <= self.x + self.width);
+            }
+        }
+        else {
+            let x_check = x >= self.x && x <= self.x + self.width;
+            if self.height < 0.0 {
+                return x_check && (y <= self.y && y >= self.y + self.height);
+            }
+            else {
+                return x_check && (y >= self.y && y <= self.y + self.height);
+            }
+        }
+    }
+
 }

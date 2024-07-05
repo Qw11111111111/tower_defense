@@ -1,3 +1,4 @@
+use color_eyre::owo_colors::OwoColorize;
 use ratatui::{
     prelude::Color,
     widgets::canvas::{Rectangle, Shape}
@@ -13,7 +14,8 @@ pub struct Ballon {
     pub color: Color,
     hitpoints: u64,
     current_segment: usize,
-    last_move: Vec<f64>
+    last_move: Vec<f64>,
+    speed: f64
 }
 
 impl Ballon {
@@ -53,17 +55,17 @@ impl Ballon {
                 return true;
             }
             if self.current_segment == 0 {
-                self.x += 1.0;
-                self.last_move[0] = 1.0;
+                self.x += self.speed;
+                self.last_move[0] = self.speed;
                 return true;
             }
             if path.elements[self.current_segment].x >= path.elements[self.current_segment - 1].x {
-                self.x += 1.0;
-                self.last_move[0] = 1.0;
+                self.x += self.speed;
+                self.last_move[0] = self.speed;
             }
             else {
-                self.x -= 1.0;
-                self.last_move[0] = -1.0;
+                self.x -= self.speed;
+                self.last_move[0] = -self.speed;
             }
         }
         else {
@@ -72,12 +74,12 @@ impl Ballon {
                 return true;
             }
             if path.elements[self.current_segment].y >= path.elements[self.current_segment - 1].y {
-                self.y += 1.0;
-                self.last_move[1] = 1.0;
+                self.y += self.speed;
+                self.last_move[1] = self.speed;
             }
             else {
-                self.y -= 1.0;
-                self.last_move[1] = -1.0;
+                self.y -= self.speed;
+                self.last_move[1] = -self.speed;
             }
         }
         true
@@ -102,7 +104,8 @@ impl BallonFactory {
             color: Color::Red,
             hitpoints: 5,
             current_segment: 0,
-            last_move: vec![0.0, 0.0]
+            last_move: vec![0.0, 0.0],
+            speed: 0.1
         }
     }
 }
