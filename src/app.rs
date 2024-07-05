@@ -326,7 +326,8 @@ impl App {
     fn mouse_over_path(&self, mouse_event: MouseEvent) -> bool {
         let x = self.col_to_x(mouse_event.column);
         let y = self.row_to_y(mouse_event.row);
-        self.path.point_on_path(x, y)
+        let tower = Tower::new(x, y);
+        self.path.point_on_path(&tower)
     }
 
 }
@@ -346,9 +347,9 @@ impl BallonPath {
         self.elements.push(RectangleInPath::horizontal(-45.0, 90.0, -10.0));
     }
 
-    fn point_on_path(&self, x: f64, y: f64) -> bool {
+    fn point_on_path(&self, tower: &Tower) -> bool {
         self.elements.iter().map(|element| {
-            element.point_on_self(x, y)
+            element.point_on_self(tower)
         }).any(|x| x)
     }
 }
@@ -384,9 +385,11 @@ impl RectangleInPath {
         }
     }
 
-    fn point_on_self(&self, x: f64, y: f64) -> bool {
+    fn point_on_self(&self, tower: &Tower) -> bool {
+        let x = tower.x;
+        let y = tower.y;
         if self.is_horizontal {
-            let y_check = y >= self.y && y <= self.y + self.height;
+            let y_check = (y >= self.y && y <= self.y + self.height) || (y + tower.height >= self.y && y + tower.height <= self.y + self.height);
             if self.width < 0.0 {
                 return y_check && (x <= self.x && x >= self.x + self.width);
             }
@@ -395,7 +398,7 @@ impl RectangleInPath {
             }
         }
         else {
-            let x_check = x >= self.x && x <= self.x + self.width;
+            let x_check = (x >= self.x && x <= self.x + self.width) || (x + tower.width >= self.x && x + tower.height <= self.x + self.width);
             if self.height < 0.0 {
                 return x_check && (y <= self.y && y >= self.y + self.height);
             }
