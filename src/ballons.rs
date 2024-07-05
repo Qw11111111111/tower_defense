@@ -17,7 +17,8 @@ pub struct Ballon {
     hitpoints: f64,
     current_segment: usize,
     last_move: Vec<f64>,
-    speed: f64
+    speed: f64,
+    pub reward: (u16, u64) // gold, score
 }
 
 impl Ballon {
@@ -123,7 +124,8 @@ impl BallonFactory {
             hitpoints: 10.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: 0.1 + rng.gen_range(0.0..0.5)
+            speed: 0.1 + rng.gen_range(0.0..0.5),
+            reward: (1, 1)
         }
     }
 }

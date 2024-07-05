@@ -41,7 +41,8 @@ pub struct App {
     ballon_factory: BallonFactory,
     round: usize,
     max_cols: u16,
-    max_rows: u16
+    max_rows: u16,
+    gold: u16
 }
 
 impl Widget for &App {
@@ -66,12 +67,12 @@ impl Widget for &App {
                         .position(Position::Bottom))
                     .bg(Color::Black);
 
-                Paragraph::new(Line::from(self.score.to_string()))
+                Paragraph::new(Line::from(vec!["score: ".bold(), self.score.to_string().into(), " | Gold: ".bold(), self.gold.to_string().into(), " | wave: ".bold(), self.round.to_string().into()]))
                     .alignment(Alignment::Left)
                     .block(block.clone())
                     .render(area, buf);
 
-                Paragraph::new(Line::from(self.highscore.to_string()))
+                Paragraph::new(Line::from(vec!["highscore: ".bold(), self.highscore.to_string().into()]))
                     .alignment(Alignment::Right)
                     .block(block.clone())
                     .render(area, buf);
@@ -144,7 +145,7 @@ impl Widget for &App {
 impl App {
 
     pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
-        let time = 1;
+        let time = 10000;
         loop {
             terminal.draw(|frame| self.render_frame(frame))?;
             if event::poll(Duration::from_micros(time))? {
@@ -156,8 +157,8 @@ impl App {
             if self.on_pause || self.dead {
                 continue;
             }
-            self.attack_ballons();
             self.move_wave();
+            self.attack_ballons();
             self.highscore();
             self.handle_wave();
         }
@@ -203,9 +204,10 @@ impl App {
             ballons: vec![],
             towers: vec![],
             ballon_factory: BallonFactory::default(),
-            round: 1,
+            round: 0,
             max_cols: cols,
-            max_rows: rows
+            max_rows: rows,
+            gold: 10
         };
         app.path.generate_path();
         Ok(app)
@@ -225,8 +227,13 @@ impl App {
     fn handle_mouse_event(&mut self, mouse_event: MouseEvent) -> Result<()> {
         match mouse_event.kind {
             MouseEventKind::Down(MouseButton::Left) => { // num of rows/cols depends on screensize, but is ankered at top left corner
-                if !self.mouse_over_path(mouse_event) {
-                    self.new_tower(mouse_event.row, mouse_event.column);
+                let tower = self.new_tower(mouse_event.row, mouse_event.column);
+                if self.gold < tower.cost {
+                    return Ok(());
+                }
+                self.gold -= tower.cost;
+                if !self.tower_on_path(&tower) && !self.tower_collision(&tower) {
+                    self.towers.push(tower);
                 }
             },
             MouseEventKind::Up(MouseButton::Left) => {
@@ -270,8 +277,7 @@ impl App {
 
     fn is_dead(&mut self) -> Result<()> {
         if !self.dead {
-            self.dead = true;
-        }
+            self.dead = true;        }
         Ok(())
     }
 
@@ -281,6 +287,7 @@ impl App {
 
     fn handle_wave(&mut self) {
         if self.ballons.len() == 0 {
+            self.round += 1;
             self.next_wave();
         }
     }
@@ -296,12 +303,10 @@ impl App {
         }
     }
 
-    fn new_tower(&mut self, row: u16, col: u16) {
+    fn new_tower(&mut self, row: u16, col: u16) -> Tower {
         let x = self.col_to_x(col);
         let y = self.row_to_y(row);
-        self.towers.push(
-            Tower::new(x, y)
-        );
+        Tower::new(x, y)
     }
 
     fn row_to_y(&self, row: u16) -> f64 {
@@ -322,17 +327,25 @@ impl App {
         actual_row
     }
 
-    fn mouse_over_path(&self, mouse_event: MouseEvent) -> bool {
-        let x = self.col_to_x(mouse_event.column);
-        let y = self.row_to_y(mouse_event.row);
-        let tower = Tower::new(x, y);
-        self.path.point_on_path(&tower)
+    fn tower_on_path(&self, tower: &Tower) -> bool {
+        self.path.point_on_path(tower)
+    }
+
+    fn mouse_over_tower(&self, x: f64, y: f64) -> bool {
+        self.towers.iter().any(|tower| (x >= tower.x && x <= tower.x + tower.width) && (y >= tower.y && y <= tower.y + tower.height))
+    }
+
+    fn tower_collision(&self, tower: &Tower) -> bool {
+        self.towers.iter().any(|tower_| tower_.collides(tower)) || self.towers.iter().any(|tower_| tower.collides(tower_))
     }
 
     fn attack_ballons(&mut self) {
-        for tower in self.towers.iter() {
+        for tower in self.towers.iter_mut() {
             tower.shoot(&mut self.ballons[0]);
             if self.ballons[0].is_dead() {
+                let (gold, score) = self.ballons[0].reward;
+                self.gold += gold;
+                self.score += score;
                 self.ballons.remove(0);
             }
             if self.ballons.len() == 0 {
