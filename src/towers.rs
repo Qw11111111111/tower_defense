@@ -1,3 +1,4 @@
+use num::ToPrimitive;
 use ratatui::prelude::Color;
 
 
@@ -13,7 +14,16 @@ pub struct Tower {
 
 //find out how to do inheritance in rust (traits, ...)
 impl Tower {
-    
+    pub fn new(x: f64, y: f64) -> Self {
+        Tower {
+            x: x,
+            y: y,
+            height: 5.0,
+            width: 5.0, 
+            color: Color::Blue,
+            projectiles: vec![]
+        }
+    }
 }
 
 #[derive(Debug, Default)]

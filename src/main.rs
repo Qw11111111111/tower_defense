@@ -16,7 +16,6 @@ pub mod ballons;
 fn main() -> Result<()> {
     errors::install_hooks()?;
     let mut terminal = tui::init()?;
-
     let path = Path::new("Highscore.bin");
     let number: u64;
     if !path.exists() {

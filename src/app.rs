@@ -5,7 +5,9 @@ use color_eyre::{
     eyre::WrapErr, owo_colors::OwoColorize, Result
 };
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, MouseButton, MouseEvent, MouseEventKind};
+
+use crossterm::terminal::size;
 
 use num::ToPrimitive;
 use ratatui::{
@@ -16,10 +18,14 @@ use ratatui::{
 
 use std::path::Path;
 
+
 use crate::read_write::*;
+
+use std::time::Duration;
 
 use crate::towers::*;
 use crate::ballons::Ballon;
+
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -33,7 +39,9 @@ pub struct App {
     ballons: Vec<Ballon>,
     towers: Vec<Tower>,
     ballon_factory: BallonFactory,
-    round: usize
+    round: usize,
+    max_cols: u16,
+    max_rows: u16
 }
 
 impl Widget for &App {
@@ -136,9 +144,12 @@ impl Widget for &App {
 impl App {
 
     pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
+        let time = 50000;
         loop {
             terminal.draw(|frame| self.render_frame(frame))?;
-            self.handle_events().wrap_err("handle events failed")?;
+            if event::poll(Duration::from_micros(time))? {
+                self.handle_events().wrap_err("handle events failed")?;
+            }
             if self.exit {
                 break;
             } 
@@ -169,11 +180,17 @@ impl App {
                     format!("handling key event failed: \n{key_event:#?}")
                 })
             }
+            Event::Mouse(mouse_event) => {
+                self.handle_mouse_event(mouse_event).wrap_err_with(|| {
+                    format!("handling mouse event failed: \n{mouse_event:#?}")
+                })
+            },
            _ => Ok(())
         }
     }
 
     pub fn new() -> Result<Self> {
+        let (cols, rows) = size()?;
         let mut app = App {
             score: 0,
             highscore: 0,
@@ -185,7 +202,9 @@ impl App {
             ballons: vec![],
             towers: vec![],
             ballon_factory: BallonFactory::default(),
-            round: 1
+            round: 1,
+            max_cols: cols,
+            max_rows: rows
         };
         app.path.generate_path();
         Ok(app)
@@ -197,6 +216,19 @@ impl App {
             KeyCode::Esc => self.pause()?,
             KeyCode::Enter => self.restart()?,
             KeyCode::Right => {},
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn handle_mouse_event(&mut self, mouse_event: MouseEvent) -> Result<()> {
+        match mouse_event.kind {
+            MouseEventKind::Down(MouseButton::Left) => { // num of rows/cols depends on screensize, but is ankered at top left corner
+                self.new_tower(mouse_event.row, mouse_event.column);
+            },
+            MouseEventKind::Up(MouseButton::Left) => {
+
+            },
             _ => {}
         }
         Ok(())
@@ -259,6 +291,34 @@ impl App {
                 k += 1;
             }
         }
+    }
+
+    fn new_tower(&mut self, row: u16, col: u16) {
+        let x = self.col_to_x(col);
+        let y = self.row_to_y(row);
+        self.towers.push(
+            Tower::new(x, y)
+        );
+    }
+
+    fn row_to_y(&self, row: u16) -> f64 {
+        let min = 1.0;
+        let max = self.max_rows.to_f64().unwrap();
+        let mut actual_row = row.to_f64().unwrap() - max; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        actual_row /= -(max);
+        actual_row *= 180.0;
+        actual_row -= 90.0;
+        actual_row
+    }
+
+    fn col_to_x(&self, col: u16) -> f64 {
+        let min = 1.0;
+        let max = self.max_cols.to_f64().unwrap();
+        let mut actual_row = col.to_f64().unwrap(); // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        actual_row /= (max);
+        actual_row *= 180.0;
+        actual_row -= 90.0;
+        actual_row
     }
 
 }
