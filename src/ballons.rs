@@ -4,6 +4,8 @@ use ratatui::{
     widgets::canvas::{Rectangle, Shape}
 };
 
+use rand::{thread_rng, Rng};
+
 use crate::app::BallonPath;
 
 #[derive(Debug, Default, Clone)]
@@ -12,7 +14,7 @@ pub struct Ballon {
     pub y: f64,
     pub radius: f64,
     pub color: Color,
-    hitpoints: u64,
+    hitpoints: f64,
     current_segment: usize,
     last_move: Vec<f64>,
     speed: f64
@@ -84,6 +86,17 @@ impl Ballon {
         }
         true
     }
+
+    pub fn reduce_hitpoints(&mut self, damge: f64) {
+        self.hitpoints -= damge;
+    }
+
+    pub fn is_dead(&self) -> bool {
+        if self.hitpoints <= 0.0 {
+            return true;
+        }
+        false
+    }
 }
 
 #[derive(Debug, Default)]
@@ -93,19 +106,24 @@ pub struct BallonFactory {
 
 impl BallonFactory {
     pub fn generate_wave(&self, round: usize, x: f64, y: f64) -> Vec<Ballon> {
-        vec![self.red_ballon(x, y); round * 10]
+        let mut wave = vec![];
+        for _ in 0..round * 30 {
+            wave.push(self.red_ballon(x, y));
+        }
+        wave
     }
 
     fn red_ballon(&self, x: f64, y: f64) -> Ballon {
+        let mut rng = thread_rng();
         Ballon {
             x: x,
             y: y,
-            radius: 10.0,
+            radius: 5.0,
             color: Color::Red,
-            hitpoints: 5,
+            hitpoints: 10.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: 0.1
+            speed: 0.1 + rng.gen_range(0.0..0.5)
         }
     }
 }

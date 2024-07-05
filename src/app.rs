@@ -156,6 +156,7 @@ impl App {
             if self.on_pause || self.dead {
                 continue;
             }
+            self.attack_ballons();
             self.move_wave();
             self.highscore();
             self.handle_wave();
@@ -287,8 +288,8 @@ impl App {
     fn move_wave(&mut self) {
         let mut k = 0;
         for i in 0..self.ballons.len() {
-            let boolena = self.ballons[i - k].move_ballon(&self.path);
-            if !boolena {
+            //let boolena = self.ballons[i - k].move_ballon(&self.path);
+            if !self.ballons[i - k].move_ballon(&self.path) {
                 self.ballons.remove(i - k);
                 k += 1;
             }
@@ -304,7 +305,6 @@ impl App {
     }
 
     fn row_to_y(&self, row: u16) -> f64 {
-        let min = 1.0;
         let max = self.max_rows.to_f64().unwrap();
         let mut actual_row = row.to_f64().unwrap() - max; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
         actual_row /= -(max);
@@ -314,7 +314,6 @@ impl App {
     }
 
     fn col_to_x(&self, col: u16) -> f64 {
-        let min = 1.0;
         let max = self.max_cols.to_f64().unwrap();
         let mut actual_row = col.to_f64().unwrap(); // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
         actual_row /= (max);
@@ -330,6 +329,17 @@ impl App {
         self.path.point_on_path(&tower)
     }
 
+    fn attack_ballons(&mut self) {
+        for tower in self.towers.iter() {
+            tower.shoot(&mut self.ballons[0]);
+            if self.ballons[0].is_dead() {
+                self.ballons.remove(0);
+            }
+            if self.ballons.len() == 0 {
+                return;
+            }
+        }
+    }
 }
 
 
