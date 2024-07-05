@@ -34,7 +34,6 @@ pub struct App {
     exit: bool,
     on_pause: bool,
     dead: bool,
-    won: bool,
     path: BallonPath,
     ballons: Vec<Ballon>,
     towers: Vec<Tower>,
@@ -42,7 +41,8 @@ pub struct App {
     round: usize,
     max_cols: u16,
     max_rows: u16,
-    gold: u16
+    gold: u16,
+    hitpoints: u16
 }
 
 impl Widget for &App {
@@ -67,7 +67,7 @@ impl Widget for &App {
                         .position(Position::Bottom))
                     .bg(Color::Black);
 
-                Paragraph::new(Line::from(vec!["score: ".bold(), self.score.to_string().into(), " | Gold: ".bold(), self.gold.to_string().into(), " | wave: ".bold(), self.round.to_string().into()]))
+                Paragraph::new(Line::from(vec!["score: ".bold(), self.score.to_string().into(), " | Gold: ".bold(), self.gold.to_string().into(), " | wave: ".bold(), self.round.to_string().into(), " | hitpoints: ".bold(), self.hitpoints.to_string().into()]))
                     .alignment(Alignment::Left)
                     .block(block.clone())
                     .render(area, buf);
@@ -132,13 +132,6 @@ impl Widget for &App {
                         .block(block.clone())
                         .render(area, buf);
                 }
-
-                if self.won {
-                    Paragraph::new(Line::from(vec![Span::from(" Congratulations you won |".bold()), Span::from(" restart: <Enter>, continue: <c>".bold())]))
-                        .centered()
-                        .block(block.clone())
-                        .render(area, buf);
-                }
     }   
 }
 
@@ -158,6 +151,7 @@ impl App {
                 continue;
             }
             self.move_wave();
+            self.is_dead()?;
             self.attack_ballons();
             self.highscore();
             self.handle_wave();
@@ -199,7 +193,6 @@ impl App {
             exit: false,
             dead: false,
             on_pause: false,
-            won: false,
             path: BallonPath::default(),
             ballons: vec![],
             towers: vec![],
@@ -207,7 +200,8 @@ impl App {
             round: 0,
             max_cols: cols,
             max_rows: rows,
-            gold: 10
+            gold: 10,
+            hitpoints: 100
         };
         app.path.generate_path();
         Ok(app)
@@ -256,6 +250,11 @@ impl App {
             self.score = 0;
             self.on_pause = false;
             self.dead = false;
+            self.hitpoints = 100;
+            self.gold = 10;
+            self.round = 0;
+            self.towers = vec![];
+            self.ballons = vec![];
         }
 
         Ok(())
@@ -277,7 +276,10 @@ impl App {
 
     fn is_dead(&mut self) -> Result<()> {
         if !self.dead {
-            self.dead = true;        }
+            if self.hitpoints <= 0 {
+                self.dead = true;
+            }
+        }
         Ok(())
     }
 
@@ -295,8 +297,8 @@ impl App {
     fn move_wave(&mut self) {
         let mut k = 0;
         for i in 0..self.ballons.len() {
-            //let boolena = self.ballons[i - k].move_ballon(&self.path);
             if !self.ballons[i - k].move_ballon(&self.path) {
+                self.hitpoints -= self.ballons[i - k].damage;
                 self.ballons.remove(i - k);
                 k += 1;
             }

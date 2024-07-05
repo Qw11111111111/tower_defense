@@ -18,7 +18,8 @@ pub struct Ballon {
     current_segment: usize,
     last_move: Vec<f64>,
     speed: f64,
-    pub reward: (u16, u64) // gold, score
+    pub reward: (u16, u64), // gold, score
+    pub damage: u16
 }
 
 impl Ballon {
@@ -125,7 +126,8 @@ impl BallonFactory {
             current_segment: 0,
             last_move: vec![0.0, 0.0],
             speed: 0.1 + rng.gen_range(0.0..0.5),
-            reward: (1, 1)
+            reward: (1, 1),
+            damage: 1
         }
     }
 }
