@@ -40,7 +40,7 @@ impl Tower {
             damage_per_projectile: 10.0,
             cost: 10,
             projectile_speed: 5.0,
-            ticks_per_projectile: 3 ,
+            ticks_per_projectile: 3,
             ticks_since_last_projectile: 0,
             range: Option::from(None)
         }
@@ -79,7 +79,7 @@ impl Tower {
             target_ballon: Option::from(index)
         };
 
-        let target_set = self.get_trajectory(ballon, ballon.clone(), path, &mut new_projectile, 20)?;
+        let target_set = self.get_trajectory(ballon, ballon.clone(), path, &mut new_projectile, 10)?;
 
         if target_set {
             self.projectiles.push(new_projectile);
@@ -139,7 +139,7 @@ impl Tower {
 
         let error = distance_in_2d(vec![ballon.x + ballon.radius, ballon.y + ballon.radius], vec![ballon_at_hit_time.x + ballon.radius, ballon_at_hit_time.y + ballon.radius]);
 
-        if error <= ballon.radius * 3.0 {
+        if error <= ballon.radius * 3.0 { // i should adjust this threshhold and the max depth dynamically based on range
             projectile.flying_time = flying_time.round().to_i32().unwrap();
             projectile.trajectory = vec![((ballon.x + ballon.radius) - self.x) / flying_time.round(), ((ballon.y + ballon.radius) - self.y + self.height) / flying_time.round()];
             return Ok(true);

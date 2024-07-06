@@ -21,12 +21,12 @@ use ratatui::{
 use std::path::Path;
 
 
-use crate::read_write::*;
+use crate::{ballons, read_write::*};
 
 use std::time::Duration;
 
 use crate::towers::*;
-use crate::ballons::Ballon;
+use crate::ballons::{Ballon, BallonWave};
 
 
 #[derive(Debug, Default)]
@@ -144,7 +144,12 @@ impl App {
 
     pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
         let time = 10000;
+        let mut wave = self.next_wave();
+        let mut wave_complete = false;
         loop {
+            if self.ballons.len() == 0 && wave_complete {
+                wave = self.next_wave();
+            }
             terminal.draw(|frame| self.render_frame(frame))?;
             if event::poll(Duration::from_micros(time))? {
                 self.handle_events().wrap_err("handle events failed")?;
@@ -155,12 +160,12 @@ impl App {
             if self.on_pause || self.dead {
                 continue;
             }
+            wave_complete = self.handle_wave(&mut wave);
             self.move_wave()?;
             self.is_dead()?;
             self.generate_projectiles()?;
             self.handle_ballon_projectile_intereaction()?;
             self.highscore();
-            self.handle_wave();
         }
         Ok(())
     }
@@ -289,15 +294,25 @@ impl App {
         Ok(())
     }
 
-    fn next_wave(&mut self) {
-        self.ballons = self.ballon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
+    fn next_wave(&mut self) -> BallonWave {
+        let wave = self.ballon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
+        self.round += 1;
+        wave
     }
 
-    fn handle_wave(&mut self) {
-        if self.ballons.len() == 0 {
-            self.round += 1;
-            self.next_wave();
+    fn handle_wave(&mut self, wave: &mut BallonWave) -> bool {
+        if wave.ticks_since_last < wave.ticks_till_bloon {
+            let _ = wave.next();
+            return false;
         }
+        let next_ballon = wave.next();
+        match next_ballon {
+            None => return true,
+            Some(bloon) => {
+                self.ballons.push(bloon);
+            }
+        }
+        false
     }
 
     fn move_wave(&mut self) -> Result<()> {
@@ -351,6 +366,9 @@ impl App {
     fn generate_projectiles(&mut self) -> Result<()> {
         for tower in self.towers.iter_mut() {
             tower.handle_projectile()?;
+            if self.ballons.len() == 0 {
+                return Ok(());
+            }
             tower.shoot(&self.ballons[0], &self.path, 0)?;
             if self.ballons[0].is_dead() {
                 let (gold, score) = self.ballons[0].reward;

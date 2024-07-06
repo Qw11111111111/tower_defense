@@ -128,27 +128,78 @@ pub struct BallonFactory {
 }
 
 impl BallonFactory {
-    pub fn generate_wave(&self, round: usize, x: f64, y: f64) -> Vec<Ballon> {
-        let mut wave = vec![];
-        for i in 0..round * 30 {
-            let speed = 0.31 * round.to_f64().unwrap() - i.to_f64().unwrap() * 0.01;
-            wave.push(self.red_ballon(x, y, speed));
+    pub fn generate_wave(&self, round: usize, x: f64, y: f64) -> BallonWave {
+        let mut rng = thread_rng();
+        BallonWave {
+            current: 0,
+            ballons: (0..(round * 20)).map(|_index| {
+                if rng.gen_range(0.0..1.0) < 0.1 {
+                    self.blue_ballon(x, y)
+                }
+                else {
+                    self.red_ballon(x, y)
+                }
+            }).collect(),
+            ticks_since_last: 0,
+            ticks_till_bloon: 30
         }
-        wave
     }
 
-    fn red_ballon(&self, x: f64, y: f64, speed: f64) -> Ballon {
+    fn red_ballon(&self, x: f64, y: f64) -> Ballon {
         Ballon {
             x: x,
             y: y,
             radius: 5.0,
             color: Color::Red,
-            hitpoints: 10.0,
+            hitpoints: 1.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: speed,
+            speed: 0.2,
             reward: (1, 1),
             damage: 1
+        }
+    }
+
+    fn blue_ballon(&self, x: f64, y: f64) -> Ballon {
+        Ballon {
+            x: x,
+            y: y,
+            radius: 5.0,
+            color: Color::Blue,
+            hitpoints: 2.0,
+            current_segment: 0,
+            last_move: vec![0.0, 0.0],
+            speed: 0.3,
+            reward: (2, 2),
+            damage: 2
+        }
+    }
+}
+
+#[derive (Clone, Debug)]
+pub struct BallonWave {
+    ballons: Vec<Ballon>,
+    current: usize,
+    pub ticks_since_last: u8,
+    pub ticks_till_bloon: u8
+}
+
+impl Iterator for BallonWave {
+    type Item = Ballon;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.ticks_since_last < self.ticks_till_bloon {
+            self.ticks_since_last += 1;
+            return Option::from(None);
+        }
+        self.ticks_since_last = 0;
+        if self.current == self.ballons.len() {
+            Option::from(None)
+        }
+        else {
+            let ballon = Option::from(self.ballons[self.current].clone());
+            self.current += 1;
+            ballon
         }
     }
 }
