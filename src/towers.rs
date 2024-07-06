@@ -21,7 +21,9 @@ pub struct Tower {
     pub projectiles: Vec<Projectile>,
     damage_per_projectile: f64,
     pub cost: u16,
-    projectile_speed: f64 
+    projectile_speed: f64,
+    ticks_per_projectile: u8,
+    ticks_since_last_projectile: u8
 }
 
 //find out how to do inheritance in rust (traits, ...)
@@ -34,10 +36,11 @@ impl Tower {
             width: 5.0, 
             color: Color::Blue,
             projectiles: vec![],
-            damage_per_projectile: 1.0,
+            damage_per_projectile: 10.0,
             cost: 10,
-            projectile_speed: 1.0
-
+            projectile_speed: 1.0,
+            ticks_per_projectile: 5,
+            ticks_since_last_projectile: 0
         }
     }
 
@@ -46,6 +49,12 @@ impl Tower {
     }
 
     pub fn shoot(&mut self, ballon: &Ballon, path: &BallonPath, index: usize) -> Result<()> {
+        if self.ticks_since_last_projectile < self.ticks_per_projectile {
+            self.ticks_since_last_projectile += 1;
+            return Ok(());
+        }
+
+        self.ticks_since_last_projectile = 0;
 
         let mut new_projectile = Projectile {
             x: self.x,
