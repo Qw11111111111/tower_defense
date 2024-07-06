@@ -5,6 +5,8 @@ use color_eyre::{
     eyre::WrapErr, Result
 };
 
+use std::rc::Rc;
+
 use crate::app::BallonPath;
 use crate::ballons::Ballon;
 use crate::utils::*;
@@ -17,7 +19,7 @@ pub struct Tower {
     pub width: f64,
     pub color: Color,
     pub projectiles: Vec<Projectile>,
-    damage_per_tick: f64,
+    damage_per_projectile: f64,
     pub cost: u16,
     projectile_speed: f64 
 }
@@ -31,8 +33,8 @@ impl Tower {
             height: 5.0,
             width: 5.0, 
             color: Color::Blue,
-            projectiles: vec![Projectile::default(); 2],
-            damage_per_tick: 1.0,
+            projectiles: vec![],
+            damage_per_projectile: 1.0,
             cost: 10,
             projectile_speed: 1.0
 
@@ -43,7 +45,7 @@ impl Tower {
         (self.x >= tower.x && self.x <= tower.x + tower.width) && (self.y >= tower.y && self.y <= tower.y + tower.height)
     }
 
-    pub fn shoot(&mut self, ballon: &mut Ballon, path: &BallonPath) -> Result<()> {
+    pub fn shoot(&mut self, ballon: &Ballon, path: &BallonPath, index: usize) -> Result<()> {
 
         let mut new_projectile = Projectile {
             x: self.x,
@@ -51,19 +53,14 @@ impl Tower {
             radius: 1.0,
             color: Color::Magenta,
             trajectory: vec![],
-            flying_time: 0
+            flying_time: 0,
+            target_ballon: Option::from(index)
         };
 
         let target_set = self.get_trajectory(ballon, ballon.clone(), path, &mut new_projectile, 10)?;
 
         if target_set {
             self.projectiles.push(new_projectile);
-        }
-
-        for projectile in self.projectiles.iter() {
-            if projectile.flying_time == 0 {
-                ballon.reduce_hitpoints(self.damage_per_tick);
-            }
         }
 
         /*
@@ -92,7 +89,7 @@ impl Tower {
     pub fn handle_projectile(&mut self) -> Result<()> {
         let mut k = 0;
         for i in 0..self.projectiles.len() {
-            if self.projectiles[i - k].flying_time <= 0 {
+            if self.projectiles[i - k].flying_time < 0 {
                 self.projectiles.remove(i - k);
                 k += 1;
                 continue;
@@ -120,7 +117,7 @@ impl Tower {
 
         let error = distance_in_2d(vec![ballon.x + ballon.radius / 2.0, ballon.y + ballon.radius / 2.0], vec![ballon_at_hit_time.x + ballon.radius / 2.0, ballon_at_hit_time.y + ballon.radius / 2.0]);
 
-        if error <= ballon.radius * 2.0 {
+        if error <= ballon.radius * 3.0 {
             projectile.flying_time = flying_time.round().to_i32().unwrap();
             projectile.trajectory = vec![((ballon.x + ballon.radius / 2.0) - self.x) / flying_time.round(), ((ballon.y + ballon.radius / 2.0) - self.y + self.height / 2.0) / flying_time.round()];
             return Ok(true);
@@ -129,6 +126,35 @@ impl Tower {
         self.get_trajectory(ballon, ballon_at_hit_time, path, projectile, depth - 1)?;
 
         Ok(false)
+    }
+
+    pub fn calculate_damage(&self, index: usize) -> f64 {
+        let mut dmg = 0.0;
+        for projectile in self.projectiles.iter() {
+            match projectile.target_ballon {
+                None => continue,
+                Some(value) => {
+                    if projectile.flying_time == 0 && value == index {
+                        dmg += self.damage_per_projectile;
+                    }
+                }
+            }
+        }
+        dmg
+    }
+
+    pub fn remove_target_of_projectile(&mut self, index: usize) -> Result<()> {
+        for projectile in self.projectiles.iter_mut() {
+            match projectile.target_ballon {
+                None => continue,
+                Some(value) => {
+                    if value == index {
+                        projectile.target_ballon = Option::from(None);
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -139,7 +165,8 @@ pub struct Projectile {
     pub radius: f64,
     pub color: Color,
     trajectory: Vec<f64>,
-    flying_time: i32
+    pub flying_time: i32,
+    target_ballon: Option<usize>
 }
 
 impl Projectile {

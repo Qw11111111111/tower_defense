@@ -9,6 +9,8 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, MouseButton
 
 use crossterm::terminal::size;
 
+use std::rc::Rc;
+
 use num::ToPrimitive;
 use ratatui::{
     prelude::*, 
@@ -115,6 +117,9 @@ impl Widget for &App {
                             ctx.layer();
                             for tower in self.towers.iter() { // draw all projectiles
                                 for projectile in tower.projectiles.iter() {
+                                    if projectile.flying_time == 0 {
+                                        continue;
+                                    }
                                     ctx.draw(&Circle {
                                         x: projectile.x,
                                         y: projectile.y,
@@ -152,7 +157,8 @@ impl App {
             }
             self.move_wave()?;
             self.is_dead()?;
-            self.attack_ballons()?;
+            self.generate_projectiles()?;
+            self.handle_ballon_projectile_intereaction()?;
             self.highscore();
             self.handle_wave();
         }
@@ -342,10 +348,10 @@ impl App {
         self.towers.iter().any(|tower_| tower_.collides(tower)) || self.towers.iter().any(|tower_| tower.collides(tower_))
     }
 
-    fn attack_ballons(&mut self) -> Result<()> {
+    fn generate_projectiles(&mut self) -> Result<()> {
         for tower in self.towers.iter_mut() {
             tower.handle_projectile()?;
-            tower.shoot(&mut self.ballons[0], &self.path)?;
+            tower.shoot(&self.ballons[0], &self.path, 0)?;
             if self.ballons[0].is_dead() {
                 let (gold, score) = self.ballons[0].reward;
                 self.gold += gold;
@@ -358,6 +364,29 @@ impl App {
         }
         Ok(())
     }
+
+    fn handle_ballon_projectile_intereaction(&mut self) -> Result<()> {
+        for i in 0..self.ballons.len() {
+            let dmg = self.damage_ballon(i)?;
+            self.ballons[i].reduce_hitpoints(dmg);
+            if self.ballons[i].is_dead() {
+                for tower in self.towers.iter_mut() {
+                    tower.remove_target_of_projectile(i)?;
+                }
+            }
+        }
+        
+        Ok(())
+    }
+
+    fn damage_ballon(&mut self, index: usize) -> Result<f64> {
+        let mut dmg = 0.0;
+        for tower in self.towers.iter() {
+            dmg += tower.calculate_damage(index);
+        }
+        Ok(dmg)
+    }
+
 }
 
 
@@ -382,7 +411,7 @@ impl BallonPath {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct RectangleInPath {
     pub x: f64,
     pub y: f64,

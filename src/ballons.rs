@@ -29,6 +29,9 @@ impl Ballon {
         In order for this to work the ballon must be able to move into the next segment by continuing into the previous direction. 
         This means that vertical and horizontal segments must overlap accordingly.
          */
+        if self.current_segment >= path.elements.len() {
+            return Ok(false);
+        }
         if path.elements[self.current_segment].is_horizontal {
             let next = self.x + self.last_move[0];
             if next > path.elements[self.current_segment].x + path.elements[self.current_segment].width || next < path.elements[self.current_segment].x {
@@ -37,7 +40,7 @@ impl Ballon {
                     return Ok(false);
                 }
                 self.last_move = vec![0.0, 0.0];
-                self.move_ballon(path);
+                self.move_ballon(path)?;
                 return Ok(true);
             }
         }
@@ -49,7 +52,7 @@ impl Ballon {
                     return Ok(false);
                 }
                 self.last_move = vec![0.0, 0.0];
-                self.move_ballon(path);
+                self.move_ballon(path)?;
                 return Ok(true);
             }
         }
@@ -100,6 +103,22 @@ impl Ballon {
         }
         false
     }
+
+    pub fn generate_clone(&self) -> Self {
+        Ballon {
+            x: self.x,
+            y: self.y,
+            radius: self.radius,
+            color: self.color,
+            hitpoints: self.hitpoints,
+            current_segment: self.current_segment,
+            last_move: self.last_move.clone(),
+            reward: self.reward,
+            speed: self.speed,
+            damage: self.damage
+        }
+    }
+
 }
 
 #[derive(Debug, Default)]
