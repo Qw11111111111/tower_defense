@@ -150,9 +150,9 @@ impl App {
             if self.on_pause || self.dead {
                 continue;
             }
-            self.move_wave();
+            self.move_wave()?;
             self.is_dead()?;
-            self.attack_ballons();
+            self.attack_ballons()?;
             self.highscore();
             self.handle_wave();
         }
@@ -294,15 +294,16 @@ impl App {
         }
     }
 
-    fn move_wave(&mut self) {
+    fn move_wave(&mut self) -> Result<()> {
         let mut k = 0;
         for i in 0..self.ballons.len() {
-            if !self.ballons[i - k].move_ballon(&self.path) {
+            if !self.ballons[i - k].move_ballon(&self.path)? {
                 self.hitpoints -= self.ballons[i - k].damage;
                 self.ballons.remove(i - k);
                 k += 1;
             }
         }
+        Ok(())
     }
 
     fn new_tower(&mut self, row: u16, col: u16) -> Tower {
@@ -341,9 +342,10 @@ impl App {
         self.towers.iter().any(|tower_| tower_.collides(tower)) || self.towers.iter().any(|tower_| tower.collides(tower_))
     }
 
-    fn attack_ballons(&mut self) {
+    fn attack_ballons(&mut self) -> Result<()> {
         for tower in self.towers.iter_mut() {
-            tower.shoot(&mut self.ballons[0]);
+            tower.handle_projectile()?;
+            tower.shoot(&mut self.ballons[0], &self.path)?;
             if self.ballons[0].is_dead() {
                 let (gold, score) = self.ballons[0].reward;
                 self.gold += gold;
@@ -351,9 +353,10 @@ impl App {
                 self.ballons.remove(0);
             }
             if self.ballons.len() == 0 {
-                return;
+                return Ok(());
             }
         }
+        Ok(())
     }
 }
 

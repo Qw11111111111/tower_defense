@@ -12,6 +12,7 @@ pub mod app;
 pub mod read_write;
 pub mod towers;
 pub mod ballons;
+pub mod utils;
 
 fn main() -> Result<()> {
     errors::install_hooks()?;
