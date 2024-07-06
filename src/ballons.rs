@@ -1,5 +1,6 @@
 use color_eyre::owo_colors::OwoColorize;
 use color_eyre::Result;
+use num::ToPrimitive;
 use ratatui::{
     prelude::Color,
     widgets::canvas::{Rectangle, Shape}
@@ -129,14 +130,14 @@ pub struct BallonFactory {
 impl BallonFactory {
     pub fn generate_wave(&self, round: usize, x: f64, y: f64) -> Vec<Ballon> {
         let mut wave = vec![];
-        for _ in 0..round * 30 {
-            wave.push(self.red_ballon(x, y));
+        for i in 0..round * 30 {
+            let speed = 0.31 * round.to_f64().unwrap() - i.to_f64().unwrap() * 0.01;
+            wave.push(self.red_ballon(x, y, speed));
         }
         wave
     }
 
-    fn red_ballon(&self, x: f64, y: f64) -> Ballon {
-        let mut rng = thread_rng();
+    fn red_ballon(&self, x: f64, y: f64, speed: f64) -> Ballon {
         Ballon {
             x: x,
             y: y,
@@ -145,7 +146,7 @@ impl BallonFactory {
             hitpoints: 10.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: 0.1 + rng.gen_range(0.0..0.5),
+            speed: speed,
             reward: (1, 1),
             damage: 1
         }

@@ -23,7 +23,8 @@ pub struct Tower {
     pub cost: u16,
     projectile_speed: f64,
     ticks_per_projectile: u8,
-    ticks_since_last_projectile: u8
+    ticks_since_last_projectile: u8,
+    range: Option<f64>
 }
 
 //find out how to do inheritance in rust (traits, ...)
@@ -38,9 +39,10 @@ impl Tower {
             projectiles: vec![],
             damage_per_projectile: 10.0,
             cost: 10,
-            projectile_speed: 1.0,
-            ticks_per_projectile: 5,
-            ticks_since_last_projectile: 0
+            projectile_speed: 5.0,
+            ticks_per_projectile: 3 ,
+            ticks_since_last_projectile: 0,
+            range: Option::from(None)
         }
     }
 
@@ -56,6 +58,17 @@ impl Tower {
 
         self.ticks_since_last_projectile = 0;
 
+        let distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![ballon.x + ballon.radius, ballon.y + ballon.radius]);
+
+        match self.range {
+            None => {},
+            Some(value) => {
+                if distance > value {
+                    return Ok(());
+                }
+            }
+        }
+
         let mut new_projectile = Projectile {
             x: self.x,
             y: self.y + self.height / 2.0,
@@ -66,7 +79,7 @@ impl Tower {
             target_ballon: Option::from(index)
         };
 
-        let target_set = self.get_trajectory(ballon, ballon.clone(), path, &mut new_projectile, 10)?;
+        let target_set = self.get_trajectory(ballon, ballon.clone(), path, &mut new_projectile, 20)?;
 
         if target_set {
             self.projectiles.push(new_projectile);
@@ -114,7 +127,7 @@ impl Tower {
             return Ok(false);
         }
 
-        let current_distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![current_target.x + ballon.radius / 2.0, current_target.y + ballon.radius / 2.0]);
+        let current_distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![current_target.x + ballon.radius, current_target.y + ballon.radius]);
 
         let flying_time = current_distance / self.projectile_speed;
 
@@ -124,11 +137,11 @@ impl Tower {
             ballon_at_hit_time.move_ballon(path)?;
         }
 
-        let error = distance_in_2d(vec![ballon.x + ballon.radius / 2.0, ballon.y + ballon.radius / 2.0], vec![ballon_at_hit_time.x + ballon.radius / 2.0, ballon_at_hit_time.y + ballon.radius / 2.0]);
+        let error = distance_in_2d(vec![ballon.x + ballon.radius, ballon.y + ballon.radius], vec![ballon_at_hit_time.x + ballon.radius, ballon_at_hit_time.y + ballon.radius]);
 
         if error <= ballon.radius * 3.0 {
             projectile.flying_time = flying_time.round().to_i32().unwrap();
-            projectile.trajectory = vec![((ballon.x + ballon.radius / 2.0) - self.x) / flying_time.round(), ((ballon.y + ballon.radius / 2.0) - self.y + self.height / 2.0) / flying_time.round()];
+            projectile.trajectory = vec![((ballon.x + ballon.radius) - self.x) / flying_time.round(), ((ballon.y + ballon.radius) - self.y + self.height) / flying_time.round()];
             return Ok(true);
         }
 
