@@ -44,7 +44,8 @@ pub struct App {
     gold: u16,
     hitpoints: u16,
     new_tower: Option<Tower>,
-    tower_shop: TowerShop
+    tower_shop: TowerShop,
+    upgrade_shop_open: Option<usize>
 }
 
 impl Widget for &App {
@@ -101,10 +102,6 @@ impl Widget for &App {
                                 ballon.render_self(ctx);
                             }
                             ctx.layer();
-                            for tower in self.towers.iter() { // draw the towers
-                                tower.render_self(ctx);
-                            }
-                            ctx.layer();
                             for tower in self.towers.iter() { // draw all projectiles
                                 for projectile in tower.projectiles.iter() {
                                     if projectile.flying_time == 0 {
@@ -119,7 +116,15 @@ impl Widget for &App {
                                 }
                             }
                             ctx.layer();
+                            for tower in self.towers.iter() { // draw the towers
+                                tower.render_self(ctx);
+                            }
+                            ctx.layer();
                             self.tower_shop.render_self(ctx);
+                            ctx.layer();
+                            for tower in self.towers.iter() {
+                                tower.upgrades.render_self(ctx);
+                            }
                             ctx.layer();
                             match &self.new_tower {
                                 None => (),
@@ -211,7 +216,8 @@ impl App {
             gold: 30,
             hitpoints: 100,
             new_tower: None,
-            tower_shop: TowerShop::new()
+            tower_shop: TowerShop::new(),
+            upgrade_shop_open: None
         };
         app.path.generate_path();
         Ok(app)
@@ -252,6 +258,22 @@ impl App {
             MouseEventKind::Down(MouseButton::Left) => {
                 if y <= -70.0 {
                     self.new_tower = self.tower_shop.get_tower(x, &self.gold);
+                }
+                else if let Some(idx) = self.upgrade_shop_open {
+                    if x >= 70.0 {
+                        if let Some(cost) = self.towers[idx].buy_upgrade(y, &self.gold) {
+                            self.gold -= cost;
+                        }
+                    }
+                }
+                if let Some(idx) =  self.mouse_over_tower(x, y) {
+                    self.towers[idx].show_upgrades();
+                    if self.towers[idx].upgrades.show_upgrades {
+                        self.upgrade_shop_open = Some(idx)
+                    }
+                    else {
+                        self.upgrade_shop_open = None;
+                    }
                 }
             }
             _ => {}
@@ -349,7 +371,7 @@ impl App {
     fn col_to_x(&self, col: u16) -> f64 {
         let max = self.max_cols.to_f64().unwrap();
         let mut actual_row = col.to_f64().unwrap(); // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
-        actual_row /= (max);
+        actual_row /= max;
         actual_row *= 180.0;
         actual_row -= 90.0;
         actual_row
@@ -359,8 +381,14 @@ impl App {
         self.path.point_on_path(tower)
     }
 
-    fn mouse_over_tower(&self, x: f64, y: f64) -> bool {
-        self.towers.iter().any(|tower| (x >= tower.x && x <= tower.x + tower.width) && (y >= tower.y && y <= tower.y + tower.height))
+    fn mouse_over_tower(&self, x: f64, y: f64) -> Option<usize> {
+        for (i, tower) in self.towers.iter().enumerate() {
+            if (x >= tower.x && x <= tower.x + tower.width) && (y >= tower.y && y <= tower.y + tower.height) {
+                return Some(i);
+            }
+        }
+        //self.towers.iter().any(|tower| (x >= tower.x && x <= tower.x + tower.width) && (y >= tower.y && y <= tower.y + tower.height))
+        None
     }
 
     fn tower_collision(&self, tower: &Tower) -> bool {

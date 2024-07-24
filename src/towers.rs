@@ -2,7 +2,7 @@ use num::ToPrimitive;
 use ratatui::prelude::Color;
 
 use color_eyre::Result;
-use ratatui::widgets::canvas::{Context, Rectangle};
+use ratatui::widgets::canvas::{Circle, Context, Points, Rectangle};
 
 use crate::app::BallonPath;
 use crate::ballons::Ballon;
@@ -21,32 +21,14 @@ pub struct Tower {
     projectile_speed: f64,
     ticks_per_projectile: u8,
     ticks_since_last_projectile: u8,
-    range: Option<f64>,
+    range: f64,
     projectile_color: Color,
     projectile_size: f64,
+    pub upgrades: TowerUpgradeShop
 }
 
 //find out how to do inheritance in rust (traits, ...)
 impl Tower{
-    pub fn new(x: f64, y: f64) -> Self {
-        //deprecated
-        Tower {
-            x: x,
-            y: y,
-            height: 5.0,
-            width: 5.0, 
-            color: Color::Blue,
-            projectiles: vec![],
-            damage_per_projectile: 10.0,
-            cost: 10,
-            projectile_speed: 5.0,
-            ticks_per_projectile: 3,
-            ticks_since_last_projectile: 0,
-            range: Option::from(None),
-            projectile_color: Color::Cyan,
-            projectile_size: 0.0,
-        }
-    }
 
     pub fn dart_thrower(x: f64, y: f64) -> Self {
         Self {
@@ -59,17 +41,18 @@ impl Tower{
             damage_per_projectile: 10.0,
             cost: 10,
             projectile_speed: 5.0,
-            ticks_per_projectile: 3,
+            ticks_per_projectile: 100,
             ticks_since_last_projectile: 0,
-            range: Option::from(180.0),
+            range: 90.0,
             projectile_color: Color::Gray,
             projectile_size: 1.0,
+            upgrades: TowerUpgradeShop::new(vec![Upgrade::RangeUpgrade(50, 20.0), Upgrade::DamageUpgrade(40, 5.0), Upgrade::FireRateUpgrade(30, 20)]),
         }
     }
 
     pub fn flame_thrower(x: f64, y: f64) -> Self {
         Self {
-            x: x,
+            x: x,  
             y: y,
             height: 5.0,
             width: 5.0, 
@@ -80,9 +63,10 @@ impl Tower{
             projectile_speed: 1.0,
             ticks_per_projectile: 0,
             ticks_since_last_projectile: 0,
-            range: Option::from(45.0),
+            range: 45.0,
             projectile_color: Color::Yellow,
             projectile_size: 1.5,
+            upgrades: TowerUpgradeShop::new(vec![Upgrade::RangeUpgrade(50, 20.0), Upgrade::DamageUpgrade(40, 5.0)]),
         }
     }
 
@@ -100,13 +84,8 @@ impl Tower{
 
         let distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![ballon.x + ballon.radius, ballon.y + ballon.radius]);
 
-        match self.range {
-            None => {},
-            Some(value) => {
-                if distance > value {
-                    return Ok(());
-                }
-            }
+        if distance > self.range {
+            return Ok(());
         }
 
         let mut new_projectile = Projectile {
@@ -208,6 +187,40 @@ impl Tower{
         });
     }
 
+    pub fn show_upgrades(&mut self) {
+        self.upgrades.show_upgrades = !self.upgrades.show_upgrades;
+    }
+
+    pub fn buy_upgrade(&mut self, y: f64, gold: &u16) -> Option<u16> {
+        if let Some(upgrade) = self.upgrades.upgrade(y) {
+            match upgrade {
+                Upgrade::DamageUpgrade(cost, dmg) => {
+                    if *gold >= cost {
+                        self.damage_per_projectile += dmg;
+                        return Some(cost);
+                    }
+                },
+                Upgrade::FireRateUpgrade(cost, rate) => {
+                    if *gold >= cost {
+                        if self.ticks_per_projectile >= rate {
+                            self.ticks_per_projectile -= rate;
+                            return Some(cost);
+                        }
+                    }
+                },
+                Upgrade::RangeUpgrade(cost, range) => {
+                    if *gold >= cost {
+                        if self.range < 180.0 {
+                            self.range += range;
+                            return Some(cost);
+                        }
+                    }
+                },
+            }
+        }
+        None
+    }
+
 }
 
 
@@ -268,5 +281,83 @@ impl Projectile {
         self.x += self.trajectory[0];
         self.y += self.trajectory[1];
         self.flying_time -= 1;
+    }
+}
+
+#[derive (Debug, Default, Clone)]
+pub struct TowerUpgradeShop {
+    pub show_upgrades: bool,
+    possible_upgrades: Vec<Upgrade>
+}
+
+impl TowerUpgradeShop {
+    pub fn render_self(&self, ctx: &mut Context) {
+        if !self.show_upgrades {
+            return;
+        }
+        for (i, upgrade) in self.possible_upgrades.iter().enumerate() {
+            ctx.draw(&Rectangle {
+                x: 70.0,
+                y: i.to_f64().unwrap() * 160.0 / self.possible_upgrades.len().to_f64().unwrap() - 70.0,
+                width: 20.0,
+                height: 160.0 / self.possible_upgrades.len().to_f64().unwrap(),
+                color: Color::White
+            });
+            let x = 80.0;
+            let y = i.to_f64().unwrap() * 160.0 / self.possible_upgrades.len().to_f64().unwrap() - 70.0 + 160.0 / self.possible_upgrades.len().to_f64().unwrap() / 2.0;
+            upgrade.render_self(ctx, x, y);
+        }
+    }
+    
+    fn new(upgrades: Vec<Upgrade>) -> Self {
+        Self {
+            show_upgrades: false,
+            possible_upgrades: upgrades
+        }
+    }
+
+    fn upgrade(&mut self, y: f64) -> Option<Upgrade> {
+        for (i, upgrade) in self.possible_upgrades.iter().enumerate() {
+            if y <= (i + 1).to_f64().unwrap() * 160.0 / self.possible_upgrades.len().to_f64().unwrap() - 70.0 {
+                return Some(upgrade.clone());
+            }
+        }
+        None
+    }
+}
+
+#[derive (Debug, Clone)]
+pub enum Upgrade {
+    RangeUpgrade(u16, f64),
+    DamageUpgrade(u16, f64),
+    FireRateUpgrade(u16, u8),
+}
+
+impl Upgrade {
+    fn render_self(&self, ctx: &mut Context, x: f64, y: f64) {
+        match self {
+            Upgrade::DamageUpgrade(_, _) => {
+                ctx.draw(&Circle {
+                    x: x - 1.0, 
+                    y: y - 1.0,
+                    radius: 1.0,
+                    color: Color::Red
+                })
+            },
+            Upgrade::FireRateUpgrade(_, _) => {
+                ctx.draw(&Points {
+                    coords: &[(x, y), (x - 2.0, y), (x + 2.0, y)],
+                    color: Color::Red
+                })
+            },
+            Upgrade::RangeUpgrade(_, _) => {
+                ctx.draw(&Circle {
+                    x: x - 3.0,
+                    y: y - 3.0,
+                    radius: 3.0,
+                    color: Color::White
+                })
+            },
+        }
     }
 }
