@@ -1,9 +1,7 @@
-use color_eyre::owo_colors::OwoColorize;
 use color_eyre::Result;
-use num::ToPrimitive;
 use ratatui::{
     prelude::Color,
-    widgets::canvas::{Context, Rectangle, Shape, Circle}
+    widgets::canvas::{Context, Circle}
 };
 
 use rand::{thread_rng, Rng};

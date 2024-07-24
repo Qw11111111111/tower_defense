@@ -1,15 +1,13 @@
 use crate::{ballons::BallonFactory, tui};
 
-use canvas::{Canvas, Circle, Rectangle, Label, Shape};
+use canvas::{Canvas, Circle, Rectangle};
 use color_eyre::{
-    eyre::WrapErr, owo_colors::OwoColorize, Result
+    eyre::WrapErr, Result
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, MouseButton, MouseEvent, MouseEventKind};
 
 use crossterm::terminal::size;
-
-use std::rc::Rc;
 
 use num::ToPrimitive;
 use ratatui::{
@@ -21,7 +19,7 @@ use ratatui::{
 use std::path::Path;
 
 
-use crate::{ballons, read_write::*};
+use crate::read_write::*;
 
 use std::time::Duration;
 
@@ -337,12 +335,6 @@ impl App {
             }
         }
         Ok(())
-    }
-
-    fn new_tower(&mut self, row: u16, col: u16) -> Tower {
-        let x = self.col_to_x(col);
-        let y = self.row_to_y(row);
-        Tower::flame_thrower(x, y)
     }
 
     fn row_to_y(&self, row: u16) -> f64 {

@@ -13,8 +13,6 @@ pub mod read_write;
 pub mod towers;
 pub mod ballons;
 pub mod utils;
-//mod projectiles;
-//mod towers2;
 
 fn main() -> Result<()> {
     errors::install_hooks()?;
