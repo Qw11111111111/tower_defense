@@ -371,7 +371,7 @@ impl App {
         for tower in self.towers.iter_mut() {
             tower.handle_projectile()?;
             if self.ballons.len() == 0 {
-                return Ok(());
+                continue;
             }
             tower.shoot(&self.ballons[0], &self.path, 0)?;
             if self.ballons[0].is_dead() {
@@ -379,9 +379,6 @@ impl App {
                 self.gold += gold;
                 self.score += score;
                 self.ballons.remove(0);
-            }
-            if self.ballons.len() == 0 {
-                return Ok(());
             }
         }
         Ok(())
