@@ -1,6 +1,6 @@
 use crate::{ballons::BallonFactory, tui};
 
-use canvas::{Canvas, Circle, Rectangle};
+use canvas::{Canvas, Circle, Rectangle, Label, Shape};
 use color_eyre::{
     eyre::WrapErr, owo_colors::OwoColorize, Result
 };
@@ -44,7 +44,9 @@ pub struct App {
     max_cols: u16,
     max_rows: u16,
     gold: u16,
-    hitpoints: u16
+    hitpoints: u16,
+    new_tower: Option<Tower>,
+    tower_shop: TowerShop
 }
 
 impl Widget for &App {
@@ -78,7 +80,8 @@ impl Widget for &App {
                     .alignment(Alignment::Right)
                     .block(block.clone())
                     .render(area, buf);
-                
+            
+
                 if !self.dead {
                     Canvas::default()
                         .block(block.clone())
@@ -97,22 +100,11 @@ impl Widget for &App {
                             }
                             ctx.layer();
                             for ballon in self.ballons.iter() { // draw the ballons
-                                ctx.draw(&Circle {
-                                    x: ballon.x,
-                                    y: ballon.y,
-                                    radius: ballon.radius,
-                                    color: ballon.color
-                                })
+                                ballon.render_self(ctx);
                             }
                             ctx.layer();
                             for tower in self.towers.iter() { // draw the towers
-                                ctx.draw(&Rectangle {
-                                    x: tower.x,
-                                    y: tower.y,
-                                    width: tower.width,
-                                    height: tower.height,
-                                    color: tower.color
-                                })
+                                tower.render_self(ctx);
                             }
                             ctx.layer();
                             for tower in self.towers.iter() { // draw all projectiles
@@ -127,6 +119,13 @@ impl Widget for &App {
                                         color: projectile.color
                                     })
                                 }
+                            }
+                            ctx.layer();
+                            self.tower_shop.render_self(ctx);
+                            ctx.layer();
+                            match &self.new_tower {
+                                None => (),
+                                Some(tower) => tower.render_self(ctx),
                             }
                         })
                         .render(area, buf);
@@ -211,8 +210,10 @@ impl App {
             round: 0,
             max_cols: cols,
             max_rows: rows,
-            gold: 10,
-            hitpoints: 100
+            gold: 30,
+            hitpoints: 100,
+            new_tower: None,
+            tower_shop: TowerShop::new()
         };
         app.path.generate_path();
         Ok(app)
@@ -230,20 +231,31 @@ impl App {
     }
 
     fn handle_mouse_event(&mut self, mouse_event: MouseEvent) -> Result<()> {
+        let y = self.row_to_y(mouse_event.row);
+        let x = self.col_to_x(mouse_event.column);
         match mouse_event.kind {
-            MouseEventKind::Down(MouseButton::Left) => { // num of rows/cols depends on screensize, but is ankered at top left corner
-                let tower = self.new_tower(mouse_event.row, mouse_event.column);
-                if self.gold < tower.cost {
-                    return Ok(());
+            MouseEventKind::Drag(MouseButton::Left) => {
+                if let Some(tower) = self.new_tower.as_mut() {
+                    tower.x = x;
+                    tower.y = y;
                 }
-                self.gold -= tower.cost;
-                if !self.tower_on_path(&tower) && !self.tower_collision(&tower) {
-                    self.towers.push(tower);
-                }
-            },
+            }
             MouseEventKind::Up(MouseButton::Left) => {
-
-            },
+                if y > -70.0 {
+                    if let Some(tower) = self.new_tower.as_ref() {
+                        if !self.tower_on_path(tower) && !self.tower_collision(tower) {
+                            self.towers.push(tower.clone());
+                            self.gold -= self.towers[self.towers.len() - 1].cost;
+                            self.new_tower = None;
+                        }
+                    }
+                }
+            }
+            MouseEventKind::Down(MouseButton::Left) => {
+                if y <= -70.0 {
+                    self.new_tower = self.tower_shop.get_tower(x, &self.gold);
+                }
+            }
             _ => {}
         }
         Ok(())
@@ -330,7 +342,7 @@ impl App {
     fn new_tower(&mut self, row: u16, col: u16) -> Tower {
         let x = self.col_to_x(col);
         let y = self.row_to_y(row);
-        Tower::new(x, y)
+        Tower::flame_thrower(x, y)
     }
 
     fn row_to_y(&self, row: u16) -> f64 {

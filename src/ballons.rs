@@ -3,7 +3,7 @@ use color_eyre::Result;
 use num::ToPrimitive;
 use ratatui::{
     prelude::Color,
-    widgets::canvas::{Rectangle, Shape}
+    widgets::canvas::{Context, Rectangle, Shape, Circle}
 };
 
 use rand::{thread_rng, Rng};
@@ -118,6 +118,15 @@ impl Ballon {
             speed: self.speed,
             damage: self.damage
         }
+    }
+
+    pub fn render_self(&self, ctx: &mut Context) {
+        ctx.draw(&Circle {
+            x: self.x,
+            y: self.y,
+            radius: self.radius,
+            color: self.color
+        });
     }
 
 }
