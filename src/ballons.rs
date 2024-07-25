@@ -14,13 +14,13 @@ pub struct Ballon {
     pub y: f64,
     pub radius: f64,
     pub color: Color,
+    pub reward: (u16, u64), // gold, score
+    pub damage: u16,
+    pub total_x: f64,
     hitpoints: f64,
     current_segment: usize,
     last_move: Vec<f64>,
     speed: f64,
-    pub reward: (u16, u64), // gold, score
-    pub damage: u16,
-    pub total_x: f64
 }
 
 impl Ballon {
@@ -215,10 +215,10 @@ impl BallonFactory {
 
 #[derive (Clone, Debug)]
 pub struct BallonWave {
+    pub ticks_since_last: u8,
+    pub ticks_till_bloon: u8,
     ballons: Vec<Ballon>,
     current: usize,
-    pub ticks_since_last: u8,
-    pub ticks_till_bloon: u8
 }
 
 impl Iterator for BallonWave {

@@ -25,15 +25,15 @@ pub struct Tower {
     pub width: f64,
     pub color: Color,
     pub projectiles: Vec<Projectile>,
-    damage_per_projectile: f64,
     pub cost: u16,
+    pub upgrades: TowerUpgradeShop,
+    damage_per_projectile: f64,
     projectile_speed: f64,
     ticks_per_projectile: u8,
     ticks_since_last_projectile: u8,
     range: f64,
     projectile_color: Color,
     projectile_size: f64,
-    pub upgrades: TowerUpgradeShop
 }
 
 //find out how to do inheritance in rust (traits, ...)
@@ -235,8 +235,8 @@ impl Tower{
 
 #[derive (Default, Debug)]
 pub struct TowerShop {
+    pub n_towers: usize,
     towers: Vec<Tower>,
-    pub n_towers: usize
 }
 
 impl TowerShop {

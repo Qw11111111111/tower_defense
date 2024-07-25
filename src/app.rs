@@ -1,23 +1,10 @@
 use {
     crate::{
-        ballons::*,
-        towers::*,
-        read_write::*,
-        tui
-    },
+        ballons::*, read_write::*, towers::*, tui
+    }, 
     color_eyre::{
         eyre::WrapErr, Result
-    },
-    ratatui::{
-        prelude::*,
-        style::Color,
-        widgets::{
-            block::{Position, Title, Block},
-            Paragraph,
-            canvas::{Canvas, Circle, Rectangle},
-            Borders,
-        }
-    },
+    }, 
     crossterm:: {
         event:: {
             self,
@@ -30,12 +17,21 @@ use {
             MouseEventKind
         },
         terminal::size
-    },
+    }, 
+    num::ToPrimitive, ratatui::{
+        prelude::{text, Alignment, Buffer, Frame, Rect, Stylize, Widget},
+        style::Color,
+        widgets::{
+            block::{Block, Position, Title}, 
+            canvas::{self, Canvas, Circle, Rectangle}, 
+            Borders, 
+            Paragraph
+        }
+    }, 
     std::{
         path::Path,
         time::Duration
-    },
-    num::ToPrimitive
+    }
 };
 
 #[derive(Debug, Default)]
@@ -56,7 +52,8 @@ pub struct App {
     hitpoints: u16,
     new_tower: Option<Tower>,
     tower_shop: TowerShop,
-    upgrade_shop_open: Option<usize>
+    upgrade_shop_open: Option<usize>,
+    tower_shop_open: bool
 }
 
 impl Widget for &App {
@@ -64,7 +61,7 @@ impl Widget for &App {
         where
             Self: Sized {
 
-                let instructions = Title::from(Line::from(vec![
+                let instructions = Title::from(text::Line::from(vec![
                     " exit:".bold(),
                     " <q> ".bold(),
                     " restart:".bold(),
@@ -81,12 +78,12 @@ impl Widget for &App {
                         .position(Position::Bottom))
                     .bg(Color::Black);
 
-                Paragraph::new(Line::from(vec!["score: ".bold(), self.score.to_string().into(), " | Gold: ".bold(), self.gold.to_string().into(), " | wave: ".bold(), self.round.to_string().into(), " | hitpoints: ".bold(), self.hitpoints.to_string().into()]))
+                Paragraph::new(text::Line::from(vec!["score: ".bold(), self.score.to_string().into(), " | Gold: ".bold(), self.gold.to_string().into(), " | wave: ".bold(), self.round.to_string().into(), " | hitpoints: ".bold(), self.hitpoints.to_string().into()]))
                     .alignment(Alignment::Left)
                     .block(block.clone())
                     .render(area, buf);
 
-                Paragraph::new(Line::from(vec!["highscore: ".bold(), self.highscore.to_string().into()]))
+                Paragraph::new(text::Line::from(vec!["highscore: ".bold(), self.highscore.to_string().into()]))
                     .alignment(Alignment::Right)
                     .block(block.clone())
                     .render(area, buf);
@@ -131,7 +128,53 @@ impl Widget for &App {
                                 tower.render_self(ctx);
                             }
                             ctx.layer();
-                            self.tower_shop.render_self(ctx);
+                            if self.tower_shop_open {
+                                self.tower_shop.render_self(ctx);
+                                ctx.draw(&Rectangle {
+                                    x: -90.0,
+                                    y: -70.0,
+                                    width: 5.0,
+                                    height: 5.0,
+                                    color: Color::White
+                                });
+                                ctx.draw(&canvas::Line {
+                                    x1: -89.0,
+                                    y1: -66.0,
+                                    x2: -87.5,
+                                    y2: -69.0,
+                                    color: Color::White
+                                });
+                                ctx.draw(&canvas::Line {
+                                    x1: -86.0,
+                                    y1: -66.0,
+                                    x2: -87.5,
+                                    y2: -69.0,
+                                    color: Color::White
+                                })
+                            }
+                            else {
+                                ctx.draw(&Rectangle {
+                                    x: -90.0,
+                                    y: -90.0,
+                                    width: 5.0,
+                                    height: 5.0,
+                                    color: Color::White
+                                });
+                                ctx.draw(&canvas::Line {
+                                    x1: -89.0,
+                                    y1: -89.0,
+                                    x2: -87.5,
+                                    y2: -86.0,
+                                    color: Color::White
+                                });
+                                ctx.draw(&canvas::Line {
+                                    x1: -86.0,
+                                    y1: -89.0,
+                                    x2: -87.5,
+                                    y2: -86.0,
+                                    color: Color::White
+                                })
+                            }
                             ctx.layer();
                             for tower in self.towers.iter() {
                                 tower.upgrades.render_self(ctx);
@@ -145,7 +188,7 @@ impl Widget for &App {
                         .render(area, buf);
                 }
                 else {
-                    Paragraph::new(Line::from(" dead ".bold().red()))
+                    Paragraph::new(text::Line::from(" dead ".bold().red()))
                         .centered()
                         .block(block.clone())
                         .render(area, buf);
@@ -228,7 +271,8 @@ impl App {
             hitpoints: 100,
             new_tower: None,
             tower_shop: TowerShop::new(),
-            upgrade_shop_open: None
+            upgrade_shop_open: None,
+            tower_shop_open: false
         };
         app.path.generate_path();
         Ok(app)
@@ -268,7 +312,17 @@ impl App {
             }
             MouseEventKind::Down(MouseButton::Left) => {
                 if y <= -70.0 {
-                    self.new_tower = self.tower_shop.get_tower(x, &self.gold);
+                    if self.tower_shop_open {
+                        self.new_tower = self.tower_shop.get_tower(x, &self.gold);
+                    }
+                    else {
+                        if y <= -82.0 && x <= -82.0 {
+                            self.tower_shop_open = true;
+                        }
+                    }
+                }
+                else if y <= -62.0 && y >= -70.0 && x <= -82.0 && self.tower_shop_open{
+                    self.tower_shop_open = false;
                 }
                 else if let Some(idx) = self.upgrade_shop_open {
                     if x >= 70.0 {
