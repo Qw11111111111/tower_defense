@@ -1,7 +1,9 @@
-use std::io;
-use std::io::prelude::*;
-use std::path::Path;
-use std::fs::File;
+use std::{
+    io,
+    io::prelude::*,
+    path::Path,
+    fs::File,
+};
 
 pub fn save(path: &Path, number: u64) -> io::Result<()> {
     let mut file = File::create(path)?;

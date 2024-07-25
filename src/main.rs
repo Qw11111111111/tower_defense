@@ -1,11 +1,3 @@
-use app::App;
-use color_eyre::Result;
-
-use std::fs::File;
-use std::path::Path;
-
-use read_write::*;
-
 pub mod errors;
 pub mod tui;
 pub mod app;
@@ -13,6 +5,16 @@ pub mod read_write;
 pub mod towers;
 pub mod ballons;
 pub mod utils;
+
+use {
+    app::App,
+    read_write::*,
+    std::{
+        fs::File,
+        path::Path
+    },
+    color_eyre::Result
+};
 
 fn main() -> Result<()> {
     errors::install_hooks()?;

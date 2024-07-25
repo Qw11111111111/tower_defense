@@ -1,12 +1,12 @@
-use color_eyre::Result;
-use ratatui::{
-    prelude::Color,
-    widgets::canvas::{Context, Circle}
+use {
+    crate::app::BallonPath,
+    color_eyre::Result,
+    ratatui::{
+        prelude::Color,
+        widgets::canvas::{Context, Circle}
+    },
+    rand::{thread_rng, Rng}
 };
-
-use rand::{thread_rng, Rng};
-
-use crate::app::BallonPath;
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Ballon {

@@ -1,12 +1,21 @@
-use num::ToPrimitive;
-use ratatui::prelude::Color;
-
-use color_eyre::Result;
-use ratatui::widgets::canvas::{Circle, Context, Points, Rectangle};
-
-use crate::app::BallonPath;
-use crate::ballons::Ballon;
-use crate::utils::*;
+use {
+    crate::{
+        app::BallonPath,
+        ballons::Ballon,
+        utils::*
+    },
+    color_eyre::Result,
+    ratatui::{
+        prelude::Color,
+        widgets::canvas::{
+            Circle,
+            Context,
+            Points,
+            Rectangle
+        }
+    },
+    num::ToPrimitive,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct Tower {

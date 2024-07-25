@@ -1,32 +1,42 @@
-use crate::{ballons::BallonFactory, tui};
-
-
-use canvas::{Canvas, Circle, Rectangle};
-use color_eyre::{
-    eyre::WrapErr, Result
+use {
+    crate::{
+        ballons::*,
+        towers::*,
+        read_write::*,
+        tui
+    },
+    color_eyre::{
+        eyre::WrapErr, Result
+    },
+    ratatui::{
+        prelude::*,
+        style::Color,
+        widgets::{
+            block::{Position, Title, Block},
+            Paragraph,
+            canvas::{Canvas, Circle, Rectangle},
+            Borders,
+        }
+    },
+    crossterm:: {
+        event:: {
+            self,
+            Event,
+            KeyCode,
+            KeyEvent,
+            KeyEventKind,
+            MouseButton,
+            MouseEvent,
+            MouseEventKind
+        },
+        terminal::size
+    },
+    std::{
+        path::Path,
+        time::Duration
+    },
+    num::ToPrimitive
 };
-
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, MouseButton, MouseEvent, MouseEventKind};
-
-use crossterm::terminal::size;
-
-use num::ToPrimitive;
-use ratatui::{
-    prelude::*, 
-    style::Color, 
-    widgets::{block::{Position, *}, Paragraph, *}
-};
-
-use std::path::Path;
-
-
-use crate::read_write::*;
-
-use std::time::Duration;
-
-use crate::towers::*;
-use crate::ballons::{Ballon, BallonWave};
-
 
 #[derive(Debug, Default)]
 pub struct App {

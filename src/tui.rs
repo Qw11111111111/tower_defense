@@ -1,7 +1,12 @@
-use std::io::{self, stdout, Stdout};
-
-use crossterm::{event::{EnableMouseCapture, DisableMouseCapture}, execute, terminal::*};
-use ratatui::prelude::*;
+use {
+    std::io::{self, stdout, Stdout},
+    crossterm::{
+        event::{EnableMouseCapture, DisableMouseCapture},
+        execute,
+        terminal::*
+    },
+    ratatui::prelude::*
+};
 
 pub type Tui = Terminal<CrosstermBackend<Stdout>>;
 
