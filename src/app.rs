@@ -1,5 +1,6 @@
 use crate::{ballons::BallonFactory, tui};
 
+
 use canvas::{Canvas, Circle, Rectangle};
 use color_eyre::{
     eyre::WrapErr, Result
@@ -356,6 +357,9 @@ impl App {
                 k += 1;
             }
         }
+        self.ballons.sort_by(|b1, b2| {
+            b2.total_x.partial_cmp(&b1.total_x).unwrap()
+        });
         Ok(())
     }
 
@@ -387,7 +391,6 @@ impl App {
                 return Some(i);
             }
         }
-        //self.towers.iter().any(|tower| (x >= tower.x && x <= tower.x + tower.width) && (y >= tower.y && y <= tower.y + tower.height))
         None
     }
 
@@ -401,12 +404,19 @@ impl App {
             if self.ballons.len() == 0 {
                 continue;
             }
-            tower.shoot(&self.ballons[0], &self.path, 0)?;
-            if self.ballons[0].is_dead() {
-                let (gold, score) = self.ballons[0].reward;
-                self.gold += gold;
-                self.score += score;
-                self.ballons.remove(0);
+            let mut k = 0;
+            for i in 0..self.ballons.len() {
+                if self.ballons[i - k].is_dead() {
+                    let (gold, score) = self.ballons[i - k].reward;
+                    self.gold += gold;
+                    self.score += score;
+                    self.ballons.remove(i - k);
+                    k += 1;
+                    continue;
+                }
+                if tower.shoot(&self.ballons[i - k], &self.path, 0)? {
+                    break;
+                }
             }
         }
         Ok(())

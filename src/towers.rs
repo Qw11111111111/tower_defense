@@ -74,10 +74,10 @@ impl Tower{
         (self.x >= tower.x && self.x <= tower.x + tower.width) && (self.y >= tower.y && self.y <= tower.y + tower.height)
     }
 
-    pub fn shoot(&mut self, ballon: &Ballon, path: &BallonPath, index: usize) -> Result<()> {
+    pub fn shoot(&mut self, ballon: &Ballon, path: &BallonPath, index: usize) -> Result<bool> {
         if self.ticks_since_last_projectile < self.ticks_per_projectile {
             self.ticks_since_last_projectile += 1;
-            return Ok(());
+            return Ok(true);
         }
 
         self.ticks_since_last_projectile = 0;
@@ -85,7 +85,7 @@ impl Tower{
         let distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![ballon.x + ballon.radius, ballon.y + ballon.radius]);
 
         if distance > self.range {
-            return Ok(());
+            return Ok(false);
         }
 
         let mut new_projectile = Projectile {
@@ -103,7 +103,7 @@ impl Tower{
         if target_set {
             self.projectiles.push(new_projectile);
         }
-        Ok(())
+        Ok(true)
     }
 
     pub fn handle_projectile(&mut self) -> Result<()> {

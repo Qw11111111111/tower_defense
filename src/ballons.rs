@@ -8,7 +8,7 @@ use rand::{thread_rng, Rng};
 
 use crate::app::BallonPath;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Ballon {
     pub x: f64,
     pub y: f64,
@@ -19,7 +19,8 @@ pub struct Ballon {
     last_move: Vec<f64>,
     speed: f64,
     pub reward: (u16, u64), // gold, score
-    pub damage: u16
+    pub damage: u16,
+    pub total_x: f64
 }
 
 impl Ballon {
@@ -59,33 +60,40 @@ impl Ballon {
         if path.elements[self.current_segment].is_horizontal {
             if self.last_move[0] != 0.0 {
                 self.x += self.last_move[0];
+                self.total_x += self.speed;
                 return Ok(true);
             }
             if self.current_segment == 0 {
                 self.x += self.speed;
+                self.total_x += self.speed;
                 self.last_move[0] = self.speed;
                 return Ok(true);
             }
             if path.elements[self.current_segment].x >= path.elements[self.current_segment - 1].x {
                 self.x += self.speed;
+                self.total_x += self.speed;
                 self.last_move[0] = self.speed;
             }
             else {
                 self.x -= self.speed;
+                self.total_x += self.speed;
                 self.last_move[0] = -self.speed;
             }
         }
         else {
             if self.last_move[1] != 0.0 {
                 self.y += self.last_move[1];
+                self.total_x += self.speed;
                 return Ok(true);
             }
             if path.elements[self.current_segment].y >= path.elements[self.current_segment - 1].y {
                 self.y += self.speed;
+                self.total_x += self.speed;
                 self.last_move[1] = self.speed;
             }
             else {
                 self.y -= self.speed;
+                self.total_x += self.speed;
                 self.last_move[1] = -self.speed;
             }
         }
@@ -114,7 +122,8 @@ impl Ballon {
             last_move: self.last_move.clone(),
             reward: self.reward,
             speed: self.speed,
-            damage: self.damage
+            damage: self.damage,
+            total_x: self.total_x
         }
     }
 
@@ -163,7 +172,8 @@ impl BallonFactory {
             last_move: vec![0.0, 0.0],
             speed: 0.2,
             reward: (1, 1),
-            damage: 1
+            damage: 1,
+            total_x: 0.0
         }
     }
 
@@ -178,7 +188,8 @@ impl BallonFactory {
             last_move: vec![0.0, 0.0],
             speed: 0.3,
             reward: (2, 2),
-            damage: 2
+            damage: 2,
+            total_x: 0.0
         }
     }
 }
