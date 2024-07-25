@@ -266,8 +266,12 @@ impl App {
                             self.gold -= cost;
                         }
                     }
+                    else {
+                        self.towers[idx].show_upgrades();
+                        self.upgrade_shop_open = None;
+                    }
                 }
-                if let Some(idx) =  self.mouse_over_tower(x, y) {
+                if let Some(idx) = self.mouse_over_tower(x, y) {
                     self.towers[idx].show_upgrades();
                     if self.towers[idx].upgrades.show_upgrades {
                         self.upgrade_shop_open = Some(idx)

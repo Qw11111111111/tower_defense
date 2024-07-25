@@ -58,7 +58,7 @@ impl Tower{
             width: 5.0, 
             color: Color::LightRed,
             projectiles: vec![],
-            damage_per_projectile: 2.0,
+            damage_per_projectile: 0.5,
             cost: 30,
             projectile_speed: 1.0,
             ticks_per_projectile: 0,

@@ -149,11 +149,14 @@ impl BallonFactory {
         BallonWave {
             current: 0,
             ballons: (0..(round * 20)).map(|_index| {
-                if rng.gen_range(0.0..1.0) < 0.1 {
-                    self.blue_ballon(x, y)
+                if rng.gen_range(0.0..1.0) < 0.9 {
+                    self.red_ballon(x, y)
+                }
+                else if round > 4 {
+                    self.blimp(x, y)
                 }
                 else {
-                    self.red_ballon(x, y)
+                    self.blue_ballon(x, y)
                 }
             }).collect(),
             ticks_since_last: 0,
@@ -189,6 +192,22 @@ impl BallonFactory {
             speed: 0.3,
             reward: (2, 2),
             damage: 2,
+            total_x: 0.0
+        }
+    }
+
+    fn blimp(&self, x: f64, y: f64) -> Ballon {
+        Ballon {
+            x: x,
+            y: y,
+            radius: 15.0,
+            color: Color::Blue,
+            hitpoints: 100.0,
+            current_segment: 0,
+            last_move: vec![0.0, 0.0],
+            speed: 0.2,
+            reward: (50, 50),
+            damage: 50,
             total_x: 0.0
         }
     }
