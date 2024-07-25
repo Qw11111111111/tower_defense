@@ -160,7 +160,7 @@ impl BallonFactory {
                 }
             }).collect(),
             ticks_since_last: 0,
-            ticks_till_bloon: 30
+            ticks_till_bloon: 300
         }
     }
 
@@ -173,7 +173,7 @@ impl BallonFactory {
             hitpoints: 1.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: 0.2,
+            speed: 0.02,
             reward: (1, 1),
             damage: 1,
             total_x: 0.0
@@ -189,7 +189,7 @@ impl BallonFactory {
             hitpoints: 2.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: 0.3,
+            speed: 0.03,
             reward: (2, 2),
             damage: 2,
             total_x: 0.0
@@ -205,7 +205,7 @@ impl BallonFactory {
             hitpoints: 100.0,
             current_segment: 0,
             last_move: vec![0.0, 0.0],
-            speed: 0.2,
+            speed: 0.02,
             reward: (50, 50),
             damage: 50,
             total_x: 0.0
@@ -215,8 +215,8 @@ impl BallonFactory {
 
 #[derive (Clone, Debug)]
 pub struct BallonWave {
-    pub ticks_since_last: u8,
-    pub ticks_till_bloon: u8,
+    pub ticks_since_last: u16,
+    pub ticks_till_bloon: u16,
     ballons: Vec<Ballon>,
     current: usize,
 }

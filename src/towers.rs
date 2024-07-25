@@ -3,9 +3,7 @@ use {
         app::BallonPath,
         ballons::Ballon,
         utils::*
-    },
-    color_eyre::Result,
-    ratatui::{
+    }, color_eyre::Result, num::ToPrimitive, ratatui::{
         prelude::Color,
         widgets::canvas::{
             Circle,
@@ -13,8 +11,7 @@ use {
             Points,
             Rectangle
         }
-    },
-    num::ToPrimitive,
+    }
 };
 
 #[derive(Debug, Default, Clone)]
@@ -29,8 +26,8 @@ pub struct Tower {
     pub upgrades: TowerUpgradeShop,
     damage_per_projectile: f64,
     projectile_speed: f64,
-    ticks_per_projectile: u8,
-    ticks_since_last_projectile: u8,
+    ticks_per_projectile: u16,
+    ticks_since_last_projectile: u16,
     range: f64,
     projectile_color: Color,
     projectile_size: f64,
@@ -49,8 +46,8 @@ impl Tower{
             projectiles: vec![],
             damage_per_projectile: 10.0,
             cost: 10,
-            projectile_speed: 5.0,
-            ticks_per_projectile: 100,
+            projectile_speed: 0.5,
+            ticks_per_projectile: 800,
             ticks_since_last_projectile: 0,
             range: 90.0,
             projectile_color: Color::Gray,
@@ -67,9 +64,9 @@ impl Tower{
             width: 5.0, 
             color: Color::LightRed,
             projectiles: vec![],
-            damage_per_projectile: 0.5,
+            damage_per_projectile: 0.01,
             cost: 30,
-            projectile_speed: 1.0,
+            projectile_speed: 0.3,
             ticks_per_projectile: 0,
             ticks_since_last_projectile: 0,
             range: 45.0,
@@ -300,20 +297,22 @@ pub struct TowerUpgradeShop {
 }
 
 impl TowerUpgradeShop {
-    pub fn render_self(&self, ctx: &mut Context) {
+    pub fn render_self(&self, ctx: &mut Context, diff_to_180: f64) {
         if !self.show_upgrades {
             return;
         }
+        let min = 180.0 + diff_to_180;
+        let d = 90.0 + diff_to_180;
         for (i, upgrade) in self.possible_upgrades.iter().enumerate() {
             ctx.draw(&Rectangle {
                 x: 70.0,
-                y: i.to_f64().unwrap() * 160.0 / self.possible_upgrades.len().to_f64().unwrap() - 70.0,
+                y: i.to_f64().unwrap() * min / self.possible_upgrades.len().to_f64().unwrap() - d,
                 width: 20.0,
-                height: 160.0 / self.possible_upgrades.len().to_f64().unwrap(),
+                height: min / self.possible_upgrades.len().to_f64().unwrap(),
                 color: Color::White
             });
             let x = 80.0;
-            let y = i.to_f64().unwrap() * 160.0 / self.possible_upgrades.len().to_f64().unwrap() - 70.0 + 160.0 / self.possible_upgrades.len().to_f64().unwrap() / 2.0;
+            let y = i.to_f64().unwrap() * min / self.possible_upgrades.len().to_f64().unwrap() - d + min / self.possible_upgrades.len().to_f64().unwrap() / 2.0;
             upgrade.render_self(ctx, x, y);
         }
     }
@@ -339,7 +338,7 @@ impl TowerUpgradeShop {
 pub enum Upgrade {
     RangeUpgrade(u16, f64),
     DamageUpgrade(u16, f64),
-    FireRateUpgrade(u16, u8),
+    FireRateUpgrade(u16, u16),
 }
 
 impl Upgrade {

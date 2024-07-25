@@ -30,7 +30,7 @@ use {
     }, 
     std::{
         path::Path,
-        time::Duration
+        time::Duration,
     }
 };
 
@@ -177,7 +177,12 @@ impl Widget for &App {
                             }
                             ctx.layer();
                             for tower in self.towers.iter() {
-                                tower.upgrades.render_self(ctx);
+                                if self.tower_shop_open {
+                                    tower.upgrades.render_self(ctx, -20.0);
+                                }
+                                else {
+                                    tower.upgrades.render_self(ctx, 0.0);
+                                }
                             }
                             ctx.layer();
                             match &self.new_tower {
@@ -199,7 +204,7 @@ impl Widget for &App {
 impl App {
 
     pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
-        let time = 10000;
+        let time = Duration::from_micros(100);
         let mut wave = self.next_wave();
         let mut wave_complete = false;
         loop {
@@ -207,7 +212,7 @@ impl App {
                 wave = self.next_wave();
             }
             terminal.draw(|frame| self.render_frame(frame))?;
-            if event::poll(Duration::from_micros(time))? {
+            if event::poll(time)? {
                 self.handle_events().wrap_err("handle events failed")?;
             }
             if self.exit {
@@ -300,7 +305,7 @@ impl App {
                 }
             }
             MouseEventKind::Up(MouseButton::Left) => {
-                if y > -70.0 {
+                if y > -70.0 || !self.tower_shop_open {
                     if let Some(tower) = self.new_tower.as_ref() {
                         if !self.tower_on_path(tower) && !self.tower_collision(tower) {
                             self.towers.push(tower.clone());
@@ -309,6 +314,9 @@ impl App {
                         }
                     }
                 }
+                else {
+                    self.new_tower = None;
+                }
             }
             MouseEventKind::Down(MouseButton::Left) => {
                 if y <= -70.0 {
@@ -316,16 +324,16 @@ impl App {
                         self.new_tower = self.tower_shop.get_tower(x, &self.gold);
                     }
                     else {
-                        if y <= -82.0 && x <= -82.0 {
+                        if y <= -85.0 && x <= -85.0 {
                             self.tower_shop_open = true;
                         }
                     }
                 }
-                else if y <= -62.0 && y >= -70.0 && x <= -82.0 && self.tower_shop_open{
+                else if y <= -65.0 && y >= -70.0 && x <= -85.0 && self.tower_shop_open{
                     self.tower_shop_open = false;
                 }
                 else if let Some(idx) = self.upgrade_shop_open {
-                    if x >= 70.0 {
+                    if x >= 70.0 && (y >= -70.0 || !self.tower_shop_open) {
                         if let Some(cost) = self.towers[idx].buy_upgrade(y, &self.gold) {
                             self.gold -= cost;
                         }
@@ -433,8 +441,8 @@ impl App {
 
     fn row_to_y(&self, row: u16) -> f64 {
         let max = self.max_rows.to_f64().unwrap();
-        let mut actual_row = row.to_f64().unwrap() - max; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
-        actual_row /= -(max);
+        let mut actual_row = row.to_f64().unwrap() - max + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        actual_row /= -max;
         actual_row *= 180.0;
         actual_row -= 90.0;
         actual_row
@@ -442,7 +450,7 @@ impl App {
 
     fn col_to_x(&self, col: u16) -> f64 {
         let max = self.max_cols.to_f64().unwrap();
-        let mut actual_row = col.to_f64().unwrap(); // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        let mut actual_row = col.to_f64().unwrap() + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
         actual_row /= max;
         actual_row *= 180.0;
         actual_row -= 90.0;
