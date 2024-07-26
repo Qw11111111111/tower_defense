@@ -31,10 +31,21 @@ fn main() -> Result<()> {
 
     let mut app = App::new()?;
     app.highscore = number;
-    app.run(&mut terminal)?;
+    while !app.run(&mut terminal)? {
+        save(path, app.highscore)?;
+        app = App::new()?;
+        let number: u64;
+        if !path.exists() {
+            File::create(path)?;
+            number = 0;
+        }
+        else {
+            number = read(&path)?;
+        }
+        app.highscore = number;
+    }
+    save(path, app.highscore)?;
     tui::restore()?;
     
-    save(path, app.highscore)?;
     Ok(())
 }
-

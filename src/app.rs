@@ -1,6 +1,6 @@
 use {
     crate::{
-        ballons::*, read_write::*, towers::*, tui
+        ballons::*, towers::*, tui
     }, 
     color_eyre::{
         eyre::WrapErr, Result
@@ -28,10 +28,7 @@ use {
             Paragraph
         }
     }, 
-    std::{
-        path::Path,
-        time::Duration,
-    }
+    std::time::Duration
 };
 
 #[derive(Debug, Default)]
@@ -53,7 +50,8 @@ pub struct App {
     new_tower: Option<Tower>,
     tower_shop: TowerShop,
     upgrade_shop_open: Option<usize>,
-    tower_shop_open: bool
+    tower_shop_open: bool,
+    restart: bool
 }
 
 impl Widget for &App {
@@ -203,7 +201,7 @@ impl Widget for &App {
 
 impl App {
 
-    pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
+    pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<bool> {
         let time = Duration::from_micros(100);
         let mut wave = self.next_wave();
         let mut wave_complete = false;
@@ -217,7 +215,10 @@ impl App {
             }
             if self.exit {
                 break;
-            } 
+            }
+            if self.restart {
+                return Ok(false);
+            }
             if self.on_pause || self.dead {
                 continue;
             }
@@ -228,7 +229,7 @@ impl App {
             self.handle_ballon_projectile_intereaction()?;
             self.highscore();
         }
-        Ok(())
+        Ok(true)
     }
 
     fn render_frame(&self, frame: &mut Frame) {
@@ -277,7 +278,8 @@ impl App {
             new_tower: None,
             tower_shop: TowerShop::new(),
             upgrade_shop_open: None,
-            tower_shop_open: false
+            tower_shop_open: false,
+            restart: false
         };
         app.path.generate_path();
         Ok(app)
@@ -287,7 +289,7 @@ impl App {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
             KeyCode::Esc => self.pause()?,
-            KeyCode::Enter => self.restart()?,
+            KeyCode::Enter => self.restart(),
             KeyCode::Right => {},
             _ => {}
         }
@@ -324,7 +326,7 @@ impl App {
                         self.new_tower = self.tower_shop.get_tower(x, &self.gold);
                     }
                     else {
-                        if y <= -85.0 && x <= -85.0 {
+                        if y <= -83.0 && x <= -85.0 {
                             self.tower_shop_open = true;
                         }
                     }
@@ -343,7 +345,7 @@ impl App {
                         self.upgrade_shop_open = None;
                     }
                 }
-                if let Some(idx) = self.mouse_over_tower(x, y) {
+                else if let Some(idx) = self.mouse_over_tower(x, y) {
                     self.towers[idx].show_upgrades();
                     if self.towers[idx].upgrades.show_upgrades {
                         self.upgrade_shop_open = Some(idx)
@@ -358,26 +360,8 @@ impl App {
         Ok(())
     }
 
-    fn restart(&mut self) -> Result<()> {
-
-        if self.dead {
-            let path = Path::new("Highscore.bin");
-            save(path, self.highscore)?;
-            
-            let num = read(path)?;
-
-            self.highscore = num;
-            self.score = 0;
-            self.on_pause = false;
-            self.dead = false;
-            self.hitpoints = 100;
-            self.gold = 10;
-            self.round = 0;
-            self.towers = vec![];
-            self.ballons = vec![];
-        }
-
-        Ok(())
+    fn restart(&mut self) {
+        self.restart = true;
     }
 
     fn exit(&mut self) {
@@ -441,20 +425,20 @@ impl App {
 
     fn row_to_y(&self, row: u16) -> f64 {
         let max = self.max_rows.to_f64().unwrap();
-        let mut actual_row = row.to_f64().unwrap() - max + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
-        actual_row /= -max;
-        actual_row *= 180.0;
-        actual_row -= 90.0;
-        actual_row
+        let mut y = row.to_f64().unwrap() - max + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        y /= -max;
+        y *= 180.0;
+        y -= 90.0;
+        y
     }
 
     fn col_to_x(&self, col: u16) -> f64 {
         let max = self.max_cols.to_f64().unwrap();
-        let mut actual_row = col.to_f64().unwrap() + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
-        actual_row /= max;
-        actual_row *= 180.0;
-        actual_row -= 90.0;
-        actual_row
+        let mut x = col.to_f64().unwrap() + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        x /= max;
+        x *= 180.0;
+        x -= 90.0;
+        x
     }
 
     fn tower_on_path(&self, tower: &Tower) -> bool {

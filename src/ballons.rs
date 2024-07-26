@@ -1,11 +1,8 @@
 use {
-    crate::app::BallonPath,
-    color_eyre::Result,
-    ratatui::{
+    crate::app::BallonPath, color_eyre::Result, num::ToPrimitive, rand::{thread_rng, Rng}, ratatui::{
         prelude::Color,
-        widgets::canvas::{Context, Circle}
-    },
-    rand::{thread_rng, Rng}
+        widgets::canvas::{Circle, Context}
+    }
 };
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -149,7 +146,7 @@ impl BallonFactory {
         BallonWave {
             current: 0,
             ballons: (0..(round * 20)).map(|_index| {
-                if rng.gen_range(0.0..1.0) < 0.9 {
+                if rng.gen_range(0.0..1.0) < (0.9 / round.to_f64().unwrap() * 1.5) {
                     self.red_ballon(x, y)
                 }
                 else if round > 4 {
