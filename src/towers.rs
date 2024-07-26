@@ -359,8 +359,8 @@ impl Upgrade {
                     radius: 1.0,
                     color: Color::Red
                 });
-                ctx.print(x - 4.0, y - 5.0, text::Line::from(vec!["Damage + ".into(), text::Span::from(value.to_string())]));
-                ctx.print(x - 1.0, y - 8.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
+                ctx.print(x - 4.0, y - 7.0, text::Line::from(vec!["Damage + ".into(), text::Span::from(value.to_string())]));
+                ctx.print(x - 1.0, y - 11.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
             },
             Upgrade::FireRateUpgrade(cost, value) => {
                 ctx.draw(&Points {
