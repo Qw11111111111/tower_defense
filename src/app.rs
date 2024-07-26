@@ -18,15 +18,24 @@ use {
         },
         terminal::size
     }, 
-    num::ToPrimitive, ratatui::{
-        prelude::{text, Alignment, Buffer, Frame, Rect, Stylize, Widget},
-        style::Color,
-        widgets::{
-            block::{Block, Position, Title}, 
-            canvas::{self, Canvas, Circle, Rectangle}, 
-            Borders, 
-            Paragraph
-        }
+    num::ToPrimitive, 
+    ratatui::{
+        prelude::{
+            text, 
+            Alignment, 
+            Buffer, 
+            Frame, 
+            Rect, 
+            Stylize, 
+            Widget
+        }, 
+            style::Color, 
+            widgets::{
+                block::{Block, Position, Title}, 
+                canvas::{self, Canvas, Circle, Rectangle}, 
+                Borders, 
+                Paragraph
+            }
     }, 
     std::time::Duration
 };

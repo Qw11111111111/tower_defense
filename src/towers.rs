@@ -3,8 +3,12 @@ use {
         app::BallonPath,
         ballons::Ballon,
         utils::*
-    }, color_eyre::Result, num::ToPrimitive, ratatui::{
-        prelude::Color,
+    }, 
+    color_eyre::Result, 
+    num::ToPrimitive, 
+    ratatui::{
+        prelude::Color, 
+        text, 
         widgets::canvas::{
             Circle,
             Context,
@@ -234,14 +238,16 @@ impl Tower{
 pub struct TowerShop {
     pub n_towers: usize,
     towers: Vec<Tower>,
+    tower_names: Vec<&'static str>,
 }
 
 impl TowerShop {
     pub fn new() -> Self {
         let n = 2.0;
         Self {
-            n_towers: 2,
-            towers: vec![Tower::dart_thrower(180.0 / n / 2.0 - 90.0, -80.0), Tower::flame_thrower(1.0 * 180.0 / n + 180.0 / n / 2.0 - 90.0, -80.0)]
+            n_towers: n.to_usize().unwrap(),
+            towers: vec![Tower::dart_thrower(180.0 / n / 2.0 - 90.0, -80.0), Tower::flame_thrower(1.0 * 180.0 / n + 180.0 / n / 2.0 - 90.0, -80.0)],
+            tower_names: vec!["dart thrower", "flame thrower"]
         }
     }
     
@@ -256,6 +262,8 @@ impl TowerShop {
             });
             ctx.layer();
             self.towers[i].render_self(ctx);
+            ctx.print(self.towers[i].x - 2.0, self.towers[i].y - 5.0, text::Line::from(self.tower_names[i]));
+            ctx.print(self.towers[i].x + 2.0, self.towers[i].y - 8.0, text::Line::from(vec![text::Span::from(self.towers[i].cost.to_string()), " $".into()]));
         }
     }
 
@@ -344,27 +352,33 @@ pub enum Upgrade {
 impl Upgrade {
     fn render_self(&self, ctx: &mut Context, x: f64, y: f64) {
         match self {
-            Upgrade::DamageUpgrade(_, _) => {
+            Upgrade::DamageUpgrade(cost, value) => {
                 ctx.draw(&Circle {
-                    x: x - 1.0, 
-                    y: y - 1.0,
+                    x: x - 0.0, 
+                    y: y - 0.0,
                     radius: 1.0,
                     color: Color::Red
-                })
+                });
+                ctx.print(x - 4.0, y - 5.0, text::Line::from(vec!["Damage + ".into(), text::Span::from(value.to_string())]));
+                ctx.print(x - 1.0, y - 8.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
             },
-            Upgrade::FireRateUpgrade(_, _) => {
+            Upgrade::FireRateUpgrade(cost, value) => {
                 ctx.draw(&Points {
                     coords: &[(x, y), (x - 2.0, y), (x + 2.0, y)],
                     color: Color::Red
-                })
+                });
+                ctx.print(x - 5.0, y - 5.0, text::Line::from(vec!["fire rate + ".into(), text::Span::from(value.to_string())]));
+                ctx.print(x - 1.0, y - 8.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
             },
-            Upgrade::RangeUpgrade(_, _) => {
+            Upgrade::RangeUpgrade(cost, value) => {
                 ctx.draw(&Circle {
-                    x: x - 3.0,
-                    y: y - 3.0,
+                    x: x + 0.0,
+                    y: y - 0.0,
                     radius: 3.0,
                     color: Color::White
-                })
+                });
+                ctx.print(x - 4.0, y - 10.0, text::Line::from(vec!["Range + ".into(), text::Span::from(value.to_string())]));
+                ctx.print(x - 1.0, y - 13.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
             },
         }
     }

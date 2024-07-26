@@ -1,5 +1,9 @@
 use {
-    crate::app::BallonPath, color_eyre::Result, num::ToPrimitive, rand::{thread_rng, Rng}, ratatui::{
+    crate::app::BallonPath, 
+    color_eyre::Result, 
+    num::ToPrimitive, 
+    rand::{thread_rng, Rng}, 
+    ratatui::{
         prelude::Color,
         widgets::canvas::{Circle, Context}
     }
