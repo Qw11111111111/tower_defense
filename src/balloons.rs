@@ -25,7 +25,7 @@ pub struct Balloon {
 }
 
 impl Balloon {
-    pub fn move_ballon(&mut self, path: &BalloonPath) -> Result<bool> {
+    pub fn move_balloon(&mut self, path: &BalloonPath) -> Result<bool> {
         /*
         In order for this to work the ballon must be able to move into the next segment by continuing into the previous direction. 
         This means that vertical and horizontal segments must overlap accordingly.
@@ -41,7 +41,7 @@ impl Balloon {
                     return Ok(false);
                 }
                 self.last_move = vec![0.0, 0.0];
-                self.move_ballon(path)?;
+                self.move_balloon(path)?;
                 return Ok(true);
             }
         }
@@ -53,7 +53,7 @@ impl Balloon {
                     return Ok(false);
                 }
                 self.last_move = vec![0.0, 0.0];
-                self.move_ballon(path)?;
+                self.move_balloon(path)?;
                 return Ok(true);
             }
         }
@@ -154,19 +154,19 @@ impl BalloonFactory {
                 let mut rng = thread_rng();
                 BalloonWave {
                     current: 0,
-                    ballons: (0..(round * 20)).map(|_index| {
+                    balloons: (0..(round * 20)).map(|_index| {
                         if rng.gen_range(0.0..1.0) < (0.9 / round.to_f64().unwrap() * 2.0) {
-                            self.red_ballon(x, y)
+                            self.red_balloon(x, y)
                         }
                         else if round > 4 {
                             self.blimp(x, y)
                         }
                         else {
-                            self.blue_ballon(x, y)
+                            self.blue_balloon(x, y)
                         }
                     }).collect(),
                     ticks_since_last: 0,
-                    ticks_till_bloon: 300
+                    ticks_till_balloon: 300
                 }
             }
         }
@@ -176,8 +176,8 @@ impl BalloonFactory {
         BalloonWave {
             current: 0,
             ticks_since_last: 0,
-            ticks_till_bloon: 500,
-            ballons: vec![self.red_ballon(x, y); 20]
+            ticks_till_balloon: 500,
+            balloons: vec![self.red_balloon(x, y); 20]
         }
     }
 
@@ -185,8 +185,8 @@ impl BalloonFactory {
         BalloonWave {
             current: 0,
             ticks_since_last: 0,
-            ticks_till_bloon: 150,
-            ballons: vec![self.red_ballon(x, y); 40]
+            ticks_till_balloon: 150,
+            balloons: vec![self.red_balloon(x, y); 40]
         }
     }
 
@@ -194,19 +194,19 @@ impl BalloonFactory {
         BalloonWave {
             current: 0,
             ticks_since_last: 0,
-            ticks_till_bloon: 300,
-            ballons: (0..60).map(|i| {
+            ticks_till_balloon: 300,
+            balloons: (0..60).map(|i| {
                 if i % 2 != 0 {
-                    self.red_ballon(x, y)
+                    self.red_balloon(x, y)
                 }
                 else {
-                    self.blue_ballon(x, y)
+                    self.blue_balloon(x, y)
                 }
             }).collect()
         }
     }
 
-    fn red_ballon(&self, x: f64, y: f64) -> Balloon {
+    fn red_balloon(&self, x: f64, y: f64) -> Balloon {
         Balloon {
             x: x,
             y: y,
@@ -222,7 +222,7 @@ impl BalloonFactory {
         }
     }
 
-    fn blue_ballon(&self, x: f64, y: f64) -> Balloon {
+    fn blue_balloon(&self, x: f64, y: f64) -> Balloon {
         Balloon {
             x: x,
             y: y,
@@ -258,8 +258,8 @@ impl BalloonFactory {
 #[derive (Clone, Debug)]
 pub struct BalloonWave {
     pub ticks_since_last: u16,
-    pub ticks_till_bloon: u16,
-    ballons: Vec<Balloon>,
+    pub ticks_till_balloon: u16,
+    balloons: Vec<Balloon>,
     current: usize,
 }
 
@@ -267,18 +267,18 @@ impl Iterator for BalloonWave {
     type Item = Balloon;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.ticks_since_last < self.ticks_till_bloon {
+        if self.ticks_since_last < self.ticks_till_balloon {
             self.ticks_since_last += 1;
             return Option::from(None);
         }
         self.ticks_since_last = 0;
-        if self.current == self.ballons.len() {
+        if self.current == self.balloons.len() {
             Option::from(None)
         }
         else {
-            let ballon = Option::from(self.ballons[self.current].clone());
+            let balloon = Option::from(self.balloons[self.current].clone());
             self.current += 1;
-            ballon
+            balloon
         }
     }
 }

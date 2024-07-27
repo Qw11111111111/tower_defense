@@ -5,8 +5,8 @@ use {
     color_eyre::{
         eyre::WrapErr, Result
     }, 
-    crossterm:: {
-        event:: {
+    crossterm::{
+        event::{
             self,
             Event,
             KeyCode,
@@ -48,9 +48,9 @@ pub struct App {
     on_pause: bool,
     dead: bool,
     path: BalloonPath,
-    ballons: Vec<Balloon>,
+    balloons: Vec<Balloon>,
     towers: Vec<Tower>,
-    ballon_factory: BalloonFactory,
+    balloon_factory: BalloonFactory,
     round: usize,
     max_cols: u16,
     max_rows: u16,
@@ -103,7 +103,7 @@ impl Widget for &App {
                         .y_bounds([-90.0, 90.0])
                         .background_color(Color::Black)
                         .paint(|ctx| {
-                            for rect in self.path.elements.iter() { // draw the path of the ballons
+                            for rect in self.path.elements.iter() { // draw the path of the balloons
                                 ctx.draw(&Rectangle {
                                     x: rect.x,
                                     y: rect.y,
@@ -113,7 +113,7 @@ impl Widget for &App {
                                 })
                             }
                             ctx.layer();
-                            for ballon in self.ballons.iter() { // draw the ballons
+                            for ballon in self.balloons.iter() { // draw the balloons
                                 ballon.render_self(ctx);
                             }
                             ctx.layer();
@@ -215,7 +215,7 @@ impl App {
         let mut wave = self.next_wave();
         let mut wave_complete = false;
         loop {
-            if self.ballons.len() == 0 && wave_complete {
+            if self.balloons.len() == 0 && wave_complete {
                 wave = self.next_wave();
             }
             terminal.draw(|frame| self.render_frame(frame))?;
@@ -276,9 +276,9 @@ impl App {
             dead: false,
             on_pause: false,
             path: BalloonPath::default(),
-            ballons: vec![],
+            balloons: vec![],
             towers: vec![],
-            ballon_factory: BalloonFactory::default(),
+            balloon_factory: BalloonFactory::default(),
             round: 0,
             max_cols: cols,
             max_rows: rows,
@@ -398,12 +398,12 @@ impl App {
 
     fn next_wave(&mut self) -> BalloonWave {
         self.round += 1;
-        let wave = self.ballon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
+        let wave = self.balloon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
         wave
     }
 
     fn handle_wave(&mut self, wave: &mut BalloonWave) -> bool {
-        if wave.ticks_since_last < wave.ticks_till_bloon {
+        if wave.ticks_since_last < wave.ticks_till_balloon {
             let _ = wave.next();
             return false;
         }
@@ -411,7 +411,7 @@ impl App {
         match next_ballon {
             None => return true,
             Some(bloon) => {
-                self.ballons.push(bloon);
+                self.balloons.push(bloon);
             }
         }
         false
@@ -419,14 +419,14 @@ impl App {
 
     fn move_wave(&mut self) -> Result<()> {
         let mut k = 0;
-        for i in 0..self.ballons.len() {
-            if !self.ballons[i - k].move_ballon(&self.path)? {
-                self.hitpoints -= self.ballons[i - k].damage;
-                self.ballons.remove(i - k);
+        for i in 0..self.balloons.len() {
+            if !self.balloons[i - k].move_balloon(&self.path)? {
+                self.hitpoints -= self.balloons[i - k].damage;
+                self.balloons.remove(i - k);
                 k += 1;
             }
         }
-        self.ballons.sort_by(|b1, b2| {
+        self.balloons.sort_by(|b1, b2| {
             b2.total_x.partial_cmp(&b1.total_x).unwrap()
         });
         Ok(())
@@ -470,20 +470,20 @@ impl App {
     fn generate_projectiles(&mut self) -> Result<()> {
         for tower in self.towers.iter_mut() {
             tower.handle_projectile()?;
-            if self.ballons.len() == 0 {
+            if self.balloons.len() == 0 {
                 continue;
             }
             let mut k = 0;
-            for i in 0..self.ballons.len() {
-                if self.ballons[i - k].is_dead() {
-                    let (gold, score) = self.ballons[i - k].reward;
+            for i in 0..self.balloons.len() {
+                if self.balloons[i - k].is_dead() {
+                    let (gold, score) = self.balloons[i - k].reward;
                     self.gold += gold;
                     self.score += score;
-                    self.ballons.remove(i - k);
+                    self.balloons.remove(i - k);
                     k += 1;
                     continue;
                 }
-                if tower.shoot(&self.ballons[i - k], &self.path, 0)? {
+                if tower.shoot(&self.balloons[i - k], &self.path, 0)? {
                     break;
                 }
             }
@@ -492,10 +492,10 @@ impl App {
     }
 
     fn handle_ballon_projectile_intereaction(&mut self) -> Result<()> {
-        for i in 0..self.ballons.len() {
+        for i in 0..self.balloons.len() {
             let dmg = self.damage_ballon(i)?;
-            self.ballons[i].reduce_hitpoints(dmg);
-            if self.ballons[i].is_dead() {
+            self.balloons[i].reduce_hitpoints(dmg);
+            if self.balloons[i].is_dead() {
                 for tower in self.towers.iter_mut() {
                     tower.remove_target_of_projectile(i)?;
                 }

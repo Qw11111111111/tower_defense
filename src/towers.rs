@@ -84,7 +84,7 @@ impl Tower{
         (self.x >= tower.x && self.x <= tower.x + tower.width) && (self.y >= tower.y && self.y <= tower.y + tower.height)
     }
 
-    pub fn shoot(&mut self, ballon: &Balloon, path: &BalloonPath, index: usize) -> Result<bool> {
+    pub fn shoot(&mut self, balloon: &Balloon, path: &BalloonPath, index: usize) -> Result<bool> {
         if self.ticks_since_last_projectile < self.ticks_per_projectile {
             self.ticks_since_last_projectile += 1;
             return Ok(true);
@@ -92,7 +92,7 @@ impl Tower{
 
         self.ticks_since_last_projectile = 0;
 
-        let distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![ballon.x + ballon.radius, ballon.y + ballon.radius]);
+        let distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![balloon.x + balloon.radius, balloon.y + balloon.radius]);
 
         if distance > self.range {
             return Ok(false);
@@ -108,7 +108,7 @@ impl Tower{
             target_ballon: Option::from(index)
         };
 
-        let target_set = self.get_trajectory(ballon, ballon.clone(), path, &mut new_projectile, 10)?;
+        let target_set = self.get_trajectory(balloon, balloon.clone(), path, &mut new_projectile, 10)?;
 
         if target_set {
             self.projectiles.push(new_projectile);
@@ -135,25 +135,25 @@ impl Tower{
             return Ok(false);
         }
 
-        let current_distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![current_target.x + ballon.radius, current_target.y + ballon.radius]);
+        let current_distance = distance_in_2d(vec![self.x, self.y + self.height / 2.0], vec![current_target.x, current_target.y]);
 
         let flying_time = current_distance / self.projectile_speed;
 
-        let mut ballon_at_hit_time = ballon.clone();
+        let mut balloon_at_hit_time = ballon.clone();
 
         for _ in 0..flying_time.round().to_i32().unwrap() {
-            ballon_at_hit_time.move_ballon(path)?;
+            balloon_at_hit_time.move_balloon(path)?;
         }
 
-        let error = distance_in_2d(vec![ballon.x + ballon.radius, ballon.y + ballon.radius], vec![ballon_at_hit_time.x + ballon.radius, ballon_at_hit_time.y + ballon.radius]);
+        let error = distance_in_2d(vec![ballon.x, ballon.y], vec![balloon_at_hit_time.x, balloon_at_hit_time.y]);
 
-        if error <= ballon.radius * 3.0 { // i should adjust this threshhold and the max depth dynamically based on range
+        if error <= ballon.radius * 1.0 { // i should adjust this threshhold and the max depth dynamically based on range
             projectile.flying_time = flying_time.round().to_i32().unwrap();
-            projectile.trajectory = vec![((ballon.x + ballon.radius) - self.x) / flying_time.round(), ((ballon.y + ballon.radius) - self.y + self.height) / flying_time.round()];
+            projectile.trajectory = vec![((ballon.x) - self.x) / flying_time.round(), ((ballon.y) - self.y + self.height) / flying_time.round()];
             return Ok(true);
         }
 
-        self.get_trajectory(ballon, ballon_at_hit_time, path, projectile, depth - 1)?;
+        self.get_trajectory(ballon, balloon_at_hit_time, path, projectile, depth - 1)?;
 
         Ok(false)
     }
