@@ -1,7 +1,7 @@
 use {
     crate::{
-        app::BallonPath,
-        ballons::Ballon,
+        app::BalloonPath,
+        balloons::Balloon,
         utils::*
     }, 
     color_eyre::Result, 
@@ -84,7 +84,7 @@ impl Tower{
         (self.x >= tower.x && self.x <= tower.x + tower.width) && (self.y >= tower.y && self.y <= tower.y + tower.height)
     }
 
-    pub fn shoot(&mut self, ballon: &Ballon, path: &BallonPath, index: usize) -> Result<bool> {
+    pub fn shoot(&mut self, ballon: &Balloon, path: &BalloonPath, index: usize) -> Result<bool> {
         if self.ticks_since_last_projectile < self.ticks_per_projectile {
             self.ticks_since_last_projectile += 1;
             return Ok(true);
@@ -129,7 +129,7 @@ impl Tower{
         Ok(())
     }
 
-    fn get_trajectory(&self, ballon: &Ballon, current_target: Ballon, path: &BallonPath, projectile: &mut Projectile, depth: u8) -> Result<bool> {
+    fn get_trajectory(&self, ballon: &Balloon, current_target: Balloon, path: &BalloonPath, projectile: &mut Projectile, depth: u8) -> Result<bool> {
 
         if depth == 0 {
             return Ok(false);
@@ -246,7 +246,10 @@ impl TowerShop {
         let n = 2.0;
         Self {
             n_towers: n.to_usize().unwrap(),
-            towers: vec![Tower::dart_thrower(180.0 / n / 2.0 - 90.0, -80.0), Tower::flame_thrower(1.0 * 180.0 / n + 180.0 / n / 2.0 - 90.0, -80.0)],
+            towers: vec![
+                Tower::dart_thrower(180.0 / n / 2.0 - 90.0, -80.0), 
+                Tower::flame_thrower(1.0 * 180.0 / n + 180.0 / n / 2.0 - 90.0, -80.0)
+                ],
             tower_names: vec!["dart thrower", "flame thrower"]
         }
     }

@@ -3,7 +3,7 @@ pub mod tui;
 pub mod app;
 pub mod read_write;
 pub mod towers;
-pub mod ballons;
+pub mod balloons;
 pub mod utils;
 
 use {

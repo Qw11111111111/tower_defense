@@ -1,5 +1,5 @@
 use {
-    crate::app::BallonPath, 
+    crate::app::BalloonPath, 
     color_eyre::Result, 
     num::ToPrimitive, 
     rand::{thread_rng, Rng}, 
@@ -10,7 +10,7 @@ use {
 };
 
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct Ballon {
+pub struct Balloon {
     pub x: f64,
     pub y: f64,
     pub radius: f64,
@@ -24,8 +24,8 @@ pub struct Ballon {
     speed: f64,
 }
 
-impl Ballon {
-    pub fn move_ballon(&mut self, path: &BallonPath) -> Result<bool> {
+impl Balloon {
+    pub fn move_ballon(&mut self, path: &BalloonPath) -> Result<bool> {
         /*
         In order for this to work the ballon must be able to move into the next segment by continuing into the previous direction. 
         This means that vertical and horizontal segments must overlap accordingly.
@@ -113,7 +113,7 @@ impl Ballon {
     }
 
     pub fn generate_clone(&self) -> Self {
-        Ballon {
+        Balloon {
             x: self.x,
             y: self.y,
             radius: self.radius,
@@ -140,33 +140,74 @@ impl Ballon {
 }
 
 #[derive(Debug, Default)]
-pub struct BallonFactory {
+pub struct BalloonFactory {
 
 }
 
-impl BallonFactory {
-    pub fn generate_wave(&self, round: usize, x: f64, y: f64) -> BallonWave {
-        let mut rng = thread_rng();
-        BallonWave {
-            current: 0,
-            ballons: (0..(round * 20)).map(|_index| {
-                if rng.gen_range(0.0..1.0) < (0.9 / round.to_f64().unwrap() * 1.5) {
-                    self.red_ballon(x, y)
+impl BalloonFactory {
+    pub fn generate_wave(&self, round: usize, x: f64, y: f64) -> BalloonWave {
+        match round {
+            1 => self.wave_1(x, y),
+            2 => self.wave_2(x, y),
+            3 => self.wave_3(x, y),
+            _ => {
+                let mut rng = thread_rng();
+                BalloonWave {
+                    current: 0,
+                    ballons: (0..(round * 20)).map(|_index| {
+                        if rng.gen_range(0.0..1.0) < (0.9 / round.to_f64().unwrap() * 2.0) {
+                            self.red_ballon(x, y)
+                        }
+                        else if round > 4 {
+                            self.blimp(x, y)
+                        }
+                        else {
+                            self.blue_ballon(x, y)
+                        }
+                    }).collect(),
+                    ticks_since_last: 0,
+                    ticks_till_bloon: 300
                 }
-                else if round > 4 {
-                    self.blimp(x, y)
+            }
+        }
+    }
+
+    fn wave_1(&self, x: f64, y: f64) -> BalloonWave {
+        BalloonWave {
+            current: 0,
+            ticks_since_last: 0,
+            ticks_till_bloon: 500,
+            ballons: vec![self.red_ballon(x, y); 20]
+        }
+    }
+
+    fn wave_2(&self, x: f64, y: f64) -> BalloonWave {
+        BalloonWave {
+            current: 0,
+            ticks_since_last: 0,
+            ticks_till_bloon: 150,
+            ballons: vec![self.red_ballon(x, y); 40]
+        }
+    }
+
+    fn wave_3(&self, x: f64, y: f64) -> BalloonWave {
+        BalloonWave {
+            current: 0,
+            ticks_since_last: 0,
+            ticks_till_bloon: 300,
+            ballons: (0..60).map(|i| {
+                if i % 2 != 0 {
+                    self.red_ballon(x, y)
                 }
                 else {
                     self.blue_ballon(x, y)
                 }
-            }).collect(),
-            ticks_since_last: 0,
-            ticks_till_bloon: 300
+            }).collect()
         }
     }
 
-    fn red_ballon(&self, x: f64, y: f64) -> Ballon {
-        Ballon {
+    fn red_ballon(&self, x: f64, y: f64) -> Balloon {
+        Balloon {
             x: x,
             y: y,
             radius: 5.0,
@@ -181,8 +222,8 @@ impl BallonFactory {
         }
     }
 
-    fn blue_ballon(&self, x: f64, y: f64) -> Ballon {
-        Ballon {
+    fn blue_ballon(&self, x: f64, y: f64) -> Balloon {
+        Balloon {
             x: x,
             y: y,
             radius: 5.0,
@@ -197,8 +238,8 @@ impl BallonFactory {
         }
     }
 
-    fn blimp(&self, x: f64, y: f64) -> Ballon {
-        Ballon {
+    fn blimp(&self, x: f64, y: f64) -> Balloon {
+        Balloon {
             x: x,
             y: y,
             radius: 15.0,
@@ -215,15 +256,15 @@ impl BallonFactory {
 }
 
 #[derive (Clone, Debug)]
-pub struct BallonWave {
+pub struct BalloonWave {
     pub ticks_since_last: u16,
     pub ticks_till_bloon: u16,
-    ballons: Vec<Ballon>,
+    ballons: Vec<Balloon>,
     current: usize,
 }
 
-impl Iterator for BallonWave {
-    type Item = Ballon;
+impl Iterator for BalloonWave {
+    type Item = Balloon;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.ticks_since_last < self.ticks_till_bloon {

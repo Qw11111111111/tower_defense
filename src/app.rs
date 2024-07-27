@@ -1,6 +1,6 @@
 use {
     crate::{
-        ballons::*, towers::*, tui
+        balloons::*, towers::*, tui
     }, 
     color_eyre::{
         eyre::WrapErr, Result
@@ -47,10 +47,10 @@ pub struct App {
     exit: bool,
     on_pause: bool,
     dead: bool,
-    path: BallonPath,
-    ballons: Vec<Ballon>,
+    path: BalloonPath,
+    ballons: Vec<Balloon>,
     towers: Vec<Tower>,
-    ballon_factory: BallonFactory,
+    ballon_factory: BalloonFactory,
     round: usize,
     max_cols: u16,
     max_rows: u16,
@@ -275,10 +275,10 @@ impl App {
             exit: false,
             dead: false,
             on_pause: false,
-            path: BallonPath::default(),
+            path: BalloonPath::default(),
             ballons: vec![],
             towers: vec![],
-            ballon_factory: BallonFactory::default(),
+            ballon_factory: BalloonFactory::default(),
             round: 0,
             max_cols: cols,
             max_rows: rows,
@@ -396,13 +396,13 @@ impl App {
         Ok(())
     }
 
-    fn next_wave(&mut self) -> BallonWave {
-        let wave = self.ballon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
+    fn next_wave(&mut self) -> BalloonWave {
         self.round += 1;
+        let wave = self.ballon_factory.generate_wave(self.round, self.path.elements[0].x, self.path.elements[0].y);
         wave
     }
 
-    fn handle_wave(&mut self, wave: &mut BallonWave) -> bool {
+    fn handle_wave(&mut self, wave: &mut BalloonWave) -> bool {
         if wave.ticks_since_last < wave.ticks_till_bloon {
             let _ = wave.next();
             return false;
@@ -517,11 +517,11 @@ impl App {
 
 
 #[derive(Debug, Default)]
-pub struct BallonPath {
+pub struct BalloonPath {
     pub elements: Vec<RectangleInPath>
 }
 
-impl BallonPath {
+impl BalloonPath {
     fn generate_path(&mut self) {
         self.elements.push(RectangleInPath::horizontal(-90.0, 0.0, 0.0));
         self.elements.push(RectangleInPath::vertical(0.0, 40.0, 0.0));
