@@ -56,7 +56,7 @@ impl Tower{
             range: 90.0,
             projectile_color: Color::Gray,
             projectile_size: 1.0,
-            upgrades: TowerUpgradeShop::new(vec![Upgrade::RangeUpgrade(50, 20.0), Upgrade::DamageUpgrade(40, 5.0), Upgrade::FireRateUpgrade(30, 20)]),
+            upgrades: TowerUpgradeShop::new(vec![Upgrade::RangeUpgrade(50, 20.0), Upgrade::DamageUpgrade(40, 5.0), Upgrade::FireRateUpgrade(30, 20), Upgrade::ProjectileSpeedUpgrade(10, 10.0)]),
         }
     }
 
@@ -226,6 +226,14 @@ impl Tower{
                         }
                     }
                 },
+                Upgrade::ProjectileSpeedUpgrade(cost, value) => {
+                    if *gold >= cost {
+                        if self.projectile_speed < 180.0 {  
+                            self.projectile_speed += value;
+                            return Some(cost);
+                        }
+                    }
+                }
             }
         }
         None
@@ -350,6 +358,7 @@ pub enum Upgrade {
     RangeUpgrade(u16, f64),
     DamageUpgrade(u16, f64),
     FireRateUpgrade(u16, u16),
+    ProjectileSpeedUpgrade(u16, f64)
 }
 
 impl Upgrade {
@@ -357,8 +366,8 @@ impl Upgrade {
         match self {
             Upgrade::DamageUpgrade(cost, value) => {
                 ctx.draw(&Circle {
-                    x: x - 0.0, 
-                    y: y - 0.0,
+                    x: x, 
+                    y: y,
                     radius: 1.0,
                     color: Color::Red
                 });
@@ -375,14 +384,24 @@ impl Upgrade {
             },
             Upgrade::RangeUpgrade(cost, value) => {
                 ctx.draw(&Circle {
-                    x: x + 0.0,
-                    y: y - 0.0,
+                    x: x,
+                    y: y,
                     radius: 3.0,
                     color: Color::White
                 });
                 ctx.print(x - 4.0, y - 10.0, text::Line::from(vec!["Range + ".into(), text::Span::from(value.to_string())]));
                 ctx.print(x - 1.0, y - 13.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
             },
+            Upgrade::ProjectileSpeedUpgrade(cost, value) => {
+                ctx.draw(&Circle {
+                    x: x,
+                    y: y,
+                    radius: 1.0,
+                    color: Color::Blue
+                });
+                ctx.print(x - 4.0, y - 10.0, text::Line::from(vec!["Speed + ".into(), text::Span::from(value.to_string())]));
+                ctx.print(x - 1.0, y - 13.0, text::Line::from(vec![text::Span::from(cost.to_string()), " $".into()]));
+            }
         }
     }
 }

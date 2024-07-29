@@ -263,6 +263,9 @@ impl App {
                     format!("handling mouse event failed: \n{mouse_event:#?}")
                 })
             },
+            Event::Resize(cols, rows) => self.handle_resize_event(cols, rows).wrap_err_with(|| {
+                format!("handling mouse event failed: \n Resize event")
+            }),
            _ => Ok(())
         }
     }
@@ -366,6 +369,11 @@ impl App {
             }
             _ => {}
         }
+        Ok(())
+    }
+
+    fn handle_resize_event(&mut self, cols: u16, rows: u16) -> Result<()> {
+        (self.max_cols, self.max_rows) = (cols, rows);
         Ok(())
     }
 
