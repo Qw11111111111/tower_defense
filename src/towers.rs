@@ -4,8 +4,7 @@ use {
         balloons::Balloon,
         utils::*
     }, 
-    color_eyre::Result, 
-    num::ToPrimitive, 
+    color_eyre::Result,
     ratatui::{
         prelude::Color, 
         text, 
@@ -141,15 +140,15 @@ impl Tower{
 
         let mut balloon_at_hit_time = ballon.clone();
 
-        for _ in 0..flying_time.round().to_i32().unwrap() {
+        for _ in 0..flying_time.round() as i32 {
             balloon_at_hit_time.move_balloon(path)?;
         }
 
         let error = distance_in_2d(vec![ballon.x, ballon.y], vec![balloon_at_hit_time.x, balloon_at_hit_time.y]);
 
         if error <= ballon.radius * 1.0 { // i should adjust this threshhold and the max depth dynamically based on range
-            projectile.flying_time = flying_time.round().to_i32().unwrap();
-            projectile.trajectory = vec![((ballon.x) - self.x) / flying_time.round(), ((ballon.y) - self.y + self.height) / flying_time.round()];
+            projectile.flying_time = flying_time.round() as i32;
+            projectile.trajectory = vec![((ballon.x + ballon.radius) - self.x) / flying_time.round(), ((ballon.y - ballon.radius) - self.y + self.height) / flying_time.round()]; //need to fix the targeting, as the projrctiles currently do not fly towards the center of a balloon
             return Ok(true);
         }
 
@@ -253,7 +252,7 @@ impl TowerShop {
     pub fn new() -> Self {
         let n = 2.0;
         Self {
-            n_towers: n.to_usize().unwrap(),
+            n_towers: n as usize,
             towers: vec![
                 Tower::dart_thrower(180.0 / n / 2.0 - 90.0, -80.0), 
                 Tower::flame_thrower(1.0 * 180.0 / n + 180.0 / n / 2.0 - 90.0, -80.0)
@@ -265,9 +264,9 @@ impl TowerShop {
     pub fn render_self(&self, ctx: &mut Context) {
         for i in 0..self.n_towers {
             ctx.draw(&Rectangle {
-                x: (i.to_f64().unwrap() * 180.0 / self.n_towers.to_f64().unwrap()) - 90.0,
+                x: (i as f64 * 180.0 / self.n_towers as f64) - 90.0,
                 y: -90.0,
-                width: 180.0 / self.n_towers.to_f64().unwrap(),
+                width: 180.0 / self.n_towers as f64,
                 height: 20.0,
                 color: Color::White,
             });
@@ -280,7 +279,7 @@ impl TowerShop {
 
     pub fn get_tower(&self, x: f64, gold: &u16) -> Option<Tower> {
         for i in 0..self.towers.len() {
-            if x <= (i + 1).to_f64().unwrap() * 180.0 / self.n_towers.to_f64().unwrap() - 90.0 {
+            if x <= (i + 1) as f64 * 180.0 / self.n_towers as f64 {
                 if *gold >= self.towers[i].cost {
                     return Option::from(self.towers[i].clone());
                 }
@@ -325,13 +324,13 @@ impl TowerUpgradeShop {
         for (i, upgrade) in self.possible_upgrades.iter().enumerate() {
             ctx.draw(&Rectangle {
                 x: 70.0,
-                y: i.to_f64().unwrap() * min / self.possible_upgrades.len().to_f64().unwrap() - d,
+                y: i as f64 * min / self.possible_upgrades.len() as f64 - d,
                 width: 20.0,
-                height: min / self.possible_upgrades.len().to_f64().unwrap(),
+                height: min / self.possible_upgrades.len() as f64,
                 color: Color::White
             });
             let x = 80.0;
-            let y = i.to_f64().unwrap() * min / self.possible_upgrades.len().to_f64().unwrap() - d + min / self.possible_upgrades.len().to_f64().unwrap() / 2.0;
+            let y = i as f64 * min / self.possible_upgrades.len() as f64 - d + min / self.possible_upgrades.len() as f64 / 2.0;
             upgrade.render_self(ctx, x, y);
         }
     }
@@ -345,7 +344,7 @@ impl TowerUpgradeShop {
 
     fn upgrade(&mut self, y: f64) -> Option<Upgrade> {
         for (i, upgrade) in self.possible_upgrades.iter().enumerate() {
-            if y <= (i + 1).to_f64().unwrap() * 160.0 / self.possible_upgrades.len().to_f64().unwrap() - 70.0 {
+            if y <= (i + 1) as f64 * 160.0 / self.possible_upgrades.len() as f64 - 70.0 {
                 return Some(upgrade.clone());
             }
         }
