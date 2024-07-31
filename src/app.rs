@@ -18,6 +18,7 @@ use {
         },
         terminal::size
     }, 
+    num::ToPrimitive, 
     ratatui::{
         prelude::{
             text, 
@@ -440,8 +441,8 @@ impl App {
     }
 
     fn row_to_y(&self, row: u16) -> f64 {
-        let max = self.max_rows as f64;
-        let mut y = row as f64 - max + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        let max = self.max_rows.to_f64().unwrap();
+        let mut y = row.to_f64().unwrap() - max + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
         y /= -max;
         y *= 180.0;
         y -= 90.0;
@@ -449,8 +450,8 @@ impl App {
     }
 
     fn col_to_x(&self, col: u16) -> f64 {
-        let max = self.max_cols as f64;
-        let mut x = col as f64 + 1.0; //\ range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
+        let max = self.max_cols.to_f64().unwrap();
+        let mut x = col.to_f64().unwrap() + 1.0; // range: (1.0?)0.0..max -> 0.0..1.0 -> 0.0..180.0 -> -90.0..90.0
         x /= max;
         x *= 180.0;
         x -= 90.0;
@@ -490,7 +491,7 @@ impl App {
                     k += 1;
                     continue;
                 }
-                if tower.shoot(&self.balloons[i - k], &self.path, i - k)? {
+                if tower.shoot(&self.balloons[i - k], &self.path, 0)? {
                     break;
                 }
             }
