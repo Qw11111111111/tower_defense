@@ -5,7 +5,6 @@ use {
         utils::*
     }, 
     color_eyre::Result, 
-    //num::ToPrimitive, 
     ratatui::{
         prelude::Color, 
         text, 
@@ -108,6 +107,7 @@ impl Tower{
             target_ballon: Option::from(index)
         };
 
+        //TODO: replace this shitty recursive function with a trigonometric calculation --> triangle : self, ballon current, ballon in t + flight time to current -> problem: nonlinear path
         let target_set = self.get_trajectory(balloon, balloon.clone(), path, &mut new_projectile, 10)?;
 
         if target_set {

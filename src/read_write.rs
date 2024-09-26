@@ -1,17 +1,14 @@
 use std::{
-    io,
-    io::prelude::*,
-    path::Path,
-    fs::File,
+    fs::File, io::{self, prelude::*}, path:: PathBuf
 };
 
-pub fn save(path: &Path, number: u64) -> io::Result<()> {
+pub fn save(path: &PathBuf, number: u64) -> io::Result<()> {
     let mut file = File::create(path)?;
     file.write_all(&number.to_le_bytes())?;
     Ok(())
 }
 
-pub fn read(path: &Path) -> io::Result<u64> {
+pub fn read(path: &PathBuf) -> io::Result<u64> {
     let mut file = File::open(path)?;
     let mut buffer = [0u8; 8];
     file.read_exact(&mut buffer)?;
